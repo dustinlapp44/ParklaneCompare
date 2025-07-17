@@ -1,0 +1,284 @@
+Invoice_Desc,Payment_Desc,Similarity,TextScore,NumberScore,Confidence
+INV-95362Alaska Common: True-up 1st QTR 2024 management fees,Alaska Common: True-up 1st QTR 2024 management fees INV-95362,0.950,0.834,1.000,high
+INV-98474Alaska Center 101: Tradify JB31761,Alaska Center 101: JB31761,0.914,0.712,1.000,high
+INV-98540Alaska Common: Tradify JB29927,Alaska Common: JB29927,0.895,0.649,1.000,high
+INV-98535Alaska Common  Tradify JB30626,Alaska Common  JB30626,0.895,0.649,1.000,high
+INV-98533Alaska Common: Tradify JB30720,Alaska Common: JB30720,0.895,0.649,1.000,high
+INV-98532Alaska Common: Tradify JB30737,Alaska Common: JB30737,0.895,0.649,1.000,high
+INV-98531Alaska Common: Tradify JB30743,Alaska Common: JB30743,0.895,0.649,1.000,high
+INV-98530Alaska Common: Tradify JB30832,Alaska Common: JB30832,0.895,0.649,1.000,high
+INV-98528Alaska Common: Tradify JB30931,Alaska Common: JB30931,0.895,0.649,1.000,high
+INV-98527Alaska Common: Tradify JB30935,Alaska Common: JB30935,0.895,0.649,1.000,high
+INV-98526Alaska Common: Tradify JB30969,Alaska Common: JB30969,0.895,0.649,1.000,high
+INV-98525Alaska Common: Tradify JB30976,Alaska Common: JB30976,0.895,0.649,1.000,high
+INV-98522Alaska Common: Tradify JB31073,Alaska Common: JB31073,0.895,0.649,1.000,high
+INV-98492Alaska Common: Tradify JB31150,Alaska Common: JB31150,0.895,0.649,1.000,high
+INV-98490Alaska Common: Tradify JB31207,Alaska Common: JB31207,0.895,0.649,1.000,high
+INV-98489Alaska Common: Tradify JB31298,Alaska Common: JB31298,0.895,0.649,1.000,high
+INV-98488Alaska Common: Tradify JB31316,Alaska Common: JB31316,0.895,0.649,1.000,high
+INV-98486Alaska Common: Tradify JB31395,Alaska Common: JB31395,0.895,0.649,1.000,high
+INV-98485Alaska Common: Tradify JB31408,Alaska Common: JB31408,0.895,0.649,1.000,high
+INV-98569Alaska Common: Tradify JB31529,Alaska Common: JB31529,0.895,0.649,1.000,high
+INV-98480alaska common: Tradify JB31616,alaska common: JB31616,0.895,0.649,1.000,high
+INV-98481Alaska Common: Tradify JB31615,Alaska Common: JB31615,0.895,0.649,1.000,high
+INV-98478Alaska Common: Tradify JB31619,Alaska Common: JB31619,0.895,0.649,1.000,high
+INV-98491Alaska Common: Tradify JB31165,Alaska Common: JB31165,0.895,0.649,1.000,high
+INV-98476Alaska Common: Tradify JB31716,Alaska Common: JB31716,0.895,0.649,1.000,high
+INV-98475Alaska Common: Tradify JB31729,Alaska Common: JB31729,0.895,0.649,1.000,high
+INV-98471Alaska Common: Tradify JB31870,Alaska Common: JB31870,0.895,0.649,1.000,high
+INV-98468alaska common: Tradify JB31957,Alaska common: JB31957,0.895,0.649,1.000,high
+INV-98479Alaska Common: Tradify JB31617,Alaska Common: JB31617,0.895,0.649,1.000,high
+INV-98487Alaska Common: Tradify JB31344,Alaska Common: JB31344,0.895,0.649,1.000,high
+INV-98534Alaska Common Tradify JB30679,Alaska Common JB30679,0.893,0.645,1.000,high
+INV-98523Alaska Common Tradify JB30983,Alaska Common JB30983,0.893,0.645,1.000,high
+INV-95766Alaska 2024 management fees,Alaska Center 2024 management fees INV-95766,0.893,0.644,1.000,high
+INV-98529Alaska 440B: Tradify JB30841,Alaska 440B: JB30841,0.892,0.640,1.000,high
+INV-98538Alaska 312: Tradify JB30420,Alaska 312: JB30420,0.890,0.634,1.000,high
+INV-98537Alaska 311: Tradify JB30463,Alaska 311: JB30463,0.890,0.634,1.000,high
+INV-98536Alaska 400: Tradify JB30625,Alaska 400: JB30625,0.890,0.634,1.000,high
+INV-98484Alaska 100: Tradify JB31464,Alaska 100: JB31464,0.890,0.634,1.000,high
+INV-98483alaska 104: Tradify JB31471,alaska 104: JB31471,0.890,0.634,1.000,high
+INV-98495Alaska 440: Tradify JB31074,Alaska 440: JB31074,0.890,0.634,1.000,high
+INV-97585Alaska 104: JB31148 (jasen),Alaska 104: JB31148,0.890,0.634,1.000,high
+INV-98477Alaska 270: Tradify JB31620,Alaska 270: JB31620,0.890,0.634,1.000,high
+INV-98575Alaska 101: Tradify JB31642,Alaska 101: JB31642,0.890,0.634,1.000,high
+INV-98472Alaska 312: Tradify JB31787,Alaska 312: JB31787,0.890,0.634,1.000,high
+INV-98473Alaska 270: Tradify JB31776,Alaska 270: JB31776,0.890,0.634,1.000,high
+INV-98470Alaska 440: Tradify JB31907,Alaska 440: JB31907,0.890,0.634,1.000,high
+INV-98469Alaska 250: Tradify JB31934,Alaska 250: JB31934,0.890,0.634,1.000,high
+INV-98539Alaska 440 Tradify JB30287,Alaska 440 JB30287,0.888,0.628,1.000,high
+INV-98494Alaska 104 Tradify JB31148,Alaska 104 JB31148,0.888,0.628,1.000,high
+INV-96121Alaska 2024 management fees,Alaska Center June 2024 management fees INV-96121,0.880,0.601,1.000,high
+INV-96744Alaska 2024 management fees,Alaska Center Common: INV-96744 Aug. 2024 Management Fees,0.880,0.598,1.000,high
+INV-93673Alaska 2023 management fees,Alaska Center Common: 2023 management fees INV-93673,0.877,0.590,1.000,high
+INV-94162Alaska 2024 management fees,Alaska Center Common: 2024 management fees INV-94162,0.877,0.590,1.000,high
+INV-94567Alaska 2024 management fees,Alaska 2024 Management Fee INV-94567,0.875,0.585,1.000,high
+INV-97001Alaska 2024 Sept. management fees,Alaska Center Common: INV-97001 Sept. Management Fees,0.874,0.580,1.000,high
+INV-94894Alaska Common JB:28235,Alaska Common JB28235,0.871,0.571,1.000,high
+INV-99063Alaska 104 JB:31923,Alaska 104 JB31923,0.867,0.558,1.000,high
+INV-97439Alaska Common Tradify JB:28235,Alaska Common JB28235,0.848,0.494,1.000,high
+INV-97536Alaska Common Tradify JB:28230,Alaska Common JB28230,0.848,0.494,1.000,high
+INV-95361Alaska 2024 management fees,Alaska 2024 Managment FeesINV-95361,0.847,0.491,1.000,high
+INV-96596Alaska 200 Tradify JB:30578,Alaska 200 JB30578,0.843,0.478,1.000,high
+INV-96496Alaska: July 2024 management fees,Alaska Center Common: INV-96496 Management Fees,0.839,0.463,1.000,high
+INV-95516Alaska 100G JB:28220,Alaska 100G INV-95516,0.822,0.407,1.000,high
+INV-95589Alaska 440 JB:29632 (Andrew) ceiling tiles,Alaska 440 JB29632,0.814,0.379,1.000,high
+INV-97989Alaska Common (Nationwide Elevator),Alaska Center Common: INV-97989 (Nationwide Lifts),0.810,0.368,1.000,high
+INV-98958Alaska Center Annual Office Supplies,Alaska Center Common: INV-98958,0.797,0.322,1.000,medium
+INV-94980Alaska 2024 management fees,Alaska Center: INV-94980 (Management Fees),0.796,0.321,1.000,medium
+INV-95090Alaska Common: Verizon Elevator Phone  03.10.2024 - 04.09.2024,Alaska Common: INV-95090,0.794,0.313,1.000,medium
+INV-94279Alaska Common JB:28749,Alaska Common: INV-94279,0.793,0.309,1.000,medium
+INV-96382Alaska Common: Verizon Elevator Phone  06.10.2024 - 07.09.2024,Alaska Common: INV-96382,0.787,0.292,1.000,medium
+INV-96388Alaska Common: Verizon Elevator Phone  07.10.2024 - 08.09.2024,Alaska Common: INV-96388,0.787,0.292,1.000,medium
+INV-94252Alaska common JB:28792,Alaska Common: INV-94252,0.787,0.291,1.000,medium
+INV-96306Alaska Common JB:29965,Alaska Common: INV-96306,0.787,0.291,1.000,medium
+INV-96331Alaska 312 JB:30319,Alaska 312: INV-96331,0.786,0.286,1.000,medium
+INV-94511Alaska common JB:28970,Alaska Common: INV-94511,0.782,0.273,1.000,medium
+INV-95852Alaska Common JB:29908,Alaska Common: INV-95852,0.782,0.273,1.000,medium
+INV-96448Alaska Common JB:30274,Alaska Common: INV-96448,0.782,0.273,1.000,medium
+INV-94755Alaska 100G JB:29132,Alaska 100G: INV-94755,0.776,0.255,1.000,medium
+INV-94754Alaska 100H JB:29133,Alaska 100H: INV-94754,0.776,0.255,1.000,medium
+INV-96463Alaska Common JB:28757,Alaska Common: INV-96463,0.776,0.255,1.000,medium
+INV-96458Alaska Common - Janitorial,Alaska Common: INV-96458,0.776,0.254,1.000,medium
+INV-98482Alaska Common: Tradify JB31484,Alaska Center Common: INV-98482,0.776,0.254,1.000,medium
+INV-94334Alaska 400 JB:28759,Alaska 400: INV-94334,0.773,0.245,1.000,medium
+INV-95044Alaska 270 JB:29293,Alaska 270: INV-95044,0.773,0.245,1.000,medium
+INV-94134Alaska Common: Security Camera Monitoring,Alaska Center Common: INV-94134,0.767,0.223,1.000,medium
+INV-97012Alaska 312,Alaska Center 312: INV-97012,0.757,0.191,1.000,medium
+INV-94292Alaska Common: Verizon Elevator Phone  01.10.2024 - 02.09.2024,Alaska Center Common: INV-94292,0.753,0.177,1.000,medium
+INV-94299Alaska Common: Verizon Elevator Phone  02.10.2024 - 03.09.2024,Alaska Center Common: INV-94299,0.753,0.177,1.000,medium
+INV-95096Alaska Common: Verizon Elevator Phone  04.10.2024 - 05.09.2024,Alaska Center Common: INV-95096,0.753,0.177,1.000,medium
+INV-95904Alaska Common: Verizon Elevator Phone  05.10.2024 - 06.09.2024,Alaska Center Common: INV-95904,0.753,0.177,1.000,medium
+INV-96761Alaska Common: Verizon Elevator Phone  08.10.2024 - 09.09.2024,Alaska Center Common: INV-96761,0.753,0.177,1.000,medium
+INV-97116Alaska Common: Verizon Elevator Phone  09.10.2024 - 10.09.2024,Alaska Center Common: INV-97116,0.753,0.177,1.000,medium
+INV-97593Alaska Common: Verizon Elevator Phone  10.10.2024 - 11.09.2024,Alaska Center Common: INV-97593,0.753,0.177,1.000,medium
+INV-97599Alaska Common: Verizon Elevator Phone  11.10.2024 - 12.09.2024,Alaska Center Common: INV-97599,0.753,0.177,1.000,medium
+INV-98995Alaska Common: Verizon Elevator Phone  12.10.2024 - 01.09.2025,Alaska Center Common: INV-98995,0.753,0.177,1.000,medium
+INV-99001Alaska Common: Verizon Elevator Phone  01.10.2025 - 02.09.2025,Alaska Center Common: INV-99001,0.753,0.177,1.000,medium
+INV-95773Alaska Common,Alaska Center Common: INV-95773,0.751,0.170,1.000,medium
+INV-96755Alaska Common,Alaska Center Common: INV-96755,0.751,0.170,1.000,medium
+INV-98990Alaska Common,Alaska Center Common: INV-98990,0.751,0.170,1.000,medium
+INV-98989Alaska Common,Alaska Center Common: INV-98989,0.751,0.170,1.000,medium
+INV-95973Alaska 40 JB:29983,Alaska Center 40: INV-95973,0.750,0.167,1.000,medium
+INV-96148Alaska 10 JB:30105,Alaska Center 10: INV-96148,0.750,0.167,1.000,medium
+INV-96975Alaska Common,Alaska Center Common: INV-96975 (Nationwide Lifts),0.750,0.167,1.000,medium
+INV-93668Alaska 400 JB:28349,Alaska Center 400: INV-93668,0.748,0.161,1.000,medium
+INV-93718Alaska 312 JB:28348,Alaska Center 312: INV-93718,0.748,0.161,1.000,medium
+INV-93969Alaska 400 JB:28546,Alaska Center 400: INV-93969,0.748,0.161,1.000,medium
+INV-94094Alaska 450 JB:28543,Alaska Center 450: INV-94094,0.748,0.161,1.000,medium
+INV-94093Alaska 450 JB:28547,Alaska Center 450: INV-94093,0.748,0.161,1.000,medium
+INV-94089Alaska 480 JB:28633,Alaska Center 480: INV-94089,0.748,0.161,1.000,medium
+INV-94314Alaska 480 JB:28842,Alaska Center 480: INV-94314,0.748,0.161,1.000,medium
+INV-94732Alaska 270 JB:29097,Alaska Center 270: INV-94732,0.748,0.161,1.000,medium
+INV-95595Alaska 270 JB:29612,Alaska Center 270: INV-95595,0.748,0.161,1.000,medium
+INV-95790Alaska 312 JB:29798,Alaska Center 312: INV-95790,0.748,0.161,1.000,medium
+INV-95981Alaska 460 JB:29967,Alaska Center 420: INV-95981,0.748,0.161,1.000,medium
+INV-96201Alaska 460 JB:30224,Alaska Center 460: INV-96201,0.748,0.161,1.000,medium
+INV-95712Alaska 100I JB:29706,Alaska Center 100: INV-95712,0.747,0.158,1.000,medium
+INV-93628Alaska 320B JB:28254,Alaska Center 320B: INV-93628,0.747,0.155,1.000,medium
+INV-93557Alaska 100E JB:28305,Alaska Center 100E: INV-93557,0.747,0.155,1.000,medium
+INV-95860Alaska 10 JB:29869,Alaska Center Common: INV-95860,0.747,0.155,1.000,medium
+INV-95546Alaska 430 JB:29621,Alaska Center Common: INV-95546,0.746,0.153,1.000,medium
+INV-94823Alaska 100H JB:29160,Alaska Building 100H: INV-94823,0.745,0.150,1.000,medium
+INV-93590Alaska Common JB:28322,Alaska Center Common: INV-93590,0.744,0.145,1.000,medium
+INV-93599Alaska common JB:28314,Alaska Center Common: INV-93599,0.744,0.145,1.000,medium
+INV-93726Alaska Common JB:28398,Alaska Center Common: INV-93726,0.744,0.145,1.000,medium
+INV-93699Alaska Common JB:28353,Alaska Center Common: INV-93699,0.744,0.145,1.000,medium
+INV-93755Alaska common JB:28395,Alaska Center Common: INV-93755,0.744,0.145,1.000,medium
+INV-93820Alaska common JB:28423,Alaska Center Common: INV-93820,0.744,0.145,1.000,medium
+INV-93860Alaska Common JB:28482,Alaska Center Common: INV-93860,0.744,0.145,1.000,medium
+INV-93907Alaska common JB:28507,Alaska Center Common: INV-93907,0.744,0.145,1.000,medium
+INV-94030Alaska Common JB:28624,Alaska Center Common: INV-94030,0.744,0.145,1.000,medium
+INV-94201Alaska Common JB:28680,Alaska Center Common: INV-94201,0.744,0.145,1.000,medium
+INV-94168Alaska Common JB:28737,Alaska Center Common: INV-94168,0.744,0.145,1.000,medium
+INV-95201Alaska Common JB:28771,Alaska Center Common: INV-95201,0.744,0.145,1.000,medium
+INV-95544Alaska Common JB:28215,Alaska Center Common: INV-95544,0.744,0.145,1.000,medium
+INV-95502Alaska Common JB:29484,Alaska Center Common: INV-95502,0.744,0.145,1.000,medium
+INV-96081Alaska Common JB:30009,Alaska Center Common: INV-96081,0.744,0.145,1.000,medium
+INV-94039Alaska Common JB: 26747,Alaska Center Common: INV-94039,0.743,0.143,1.000,medium
+INV-95663Alaska Common JB: 28768,Alaska Center Common: INV-95663,0.743,0.143,1.000,medium
+INV-96598Alaska 100B Tradify JB:30610,Alaska Center 100B: INV-96598,0.741,0.136,1.000,medium
+INV-96599Alaska 100L Tradify JB:30606,Alaska Center 100L: INV-96599,0.741,0.136,1.000,medium
+INV-97690Alaska Common - Janitorial,Alaska Center Common: INV-97690,0.741,0.136,1.000,medium
+INV-97846Alaska Common - Janitorial,Alaska Center Common: INV-97846,0.741,0.136,1.000,medium
+INV-96253Alaska Common Tradify JB:30183,Alaska Center Common: INV-96253,0.739,0.129,1.000,medium
+INV-96675Alaska Common Tradify JB:30518,Alaska Center Common: INV-96675,0.739,0.129,1.000,medium
+INV-96591Alaska Common Tradify JB:30585,Alaska Center Common: INV-96591,0.739,0.129,1.000,medium
+INV-98792Alaska Common (Outside Vendor),Alaska Center Common: INV-98792,0.739,0.129,1.000,medium
+INV-97260Alaska 2024 Oct. management fees,Alaska Center Common: INV-97260,0.737,0.125,1.000,medium
+INV-97574Alaska 2024 Nov. management fees,Alaska Center Common: INV-97574,0.737,0.125,1.000,medium
+INV-97809Alaska 2024 Dec. management fees,Alaska Center Common: INV-97809,0.737,0.125,1.000,medium
+INV-98420Alaska Jan. 2025 management fees,Alaska Center Common: INV-98420,0.737,0.125,1.000,medium
+INV-99019Alaska Feb. 2025 management fees,Alaska Center Common: INV-99019,0.737,0.125,1.000,medium
+INV-99213Alaska 2024 March management fees,Alaska Center Common: INV-99213,0.737,0.123,1.000,medium
+
+INV-97121Alaska Common: Chlorine,,,,,
+INV-97234Alaska Common: Repairs (Sonny),,,,,
+INV-97602Alaska Common: Door Locks (Mike/Jasen T.),,,,,
+INV-97684Alaska Common: Dump Fee,,,,,
+INV-97392Alaska Common: (JASEN),,,,,
+INV-97403Alaska Common: (LIO),,,,,
+INV-97559Alaska 104: Rekey,,,,,
+INV-99070Alaska Common: Router (Amazon),,,,,
+INV-98655Alaska Common: Meter (Mike T.),,,,,
+INV-98652Alaska 104: Meter (Mike T.),,,,,
+INV-98651Alaska 108: Meter (Mike T.),,,,,
+INV-98399Alaska Maintenance Invoices: 4/3 Transfer,,,,,
+INV-99262Alaska Maintenance Invoices: 4/10 Transfer,,,,,
+INV-99342Alaska Common: Duplicated Invoices,,,,,
+CN-99344Alaska Common: Duplicated Invoices,,,,,
+INV-99341Alaska Maintenance Invoices: 05/09 Transfer,,,,,
+INV-99316Alaska 2024 management fees,,,,,
+,JB29927 Alaska Center Common,,
+,Alaska Common: JB29927,,
+,JB30287 Alaska Center 440,,
+,Alaska 440 JB30287,,
+,JB30420 Alaska Center 312,,
+,Alaska Common JB28230,,
+,JB30463 Alaska Center 311,,
+,Alaska 311: JB30463,,
+,Alaska 200 JB30578,,
+,JB30626 Alaska Center Common,,
+,JB30625 Alaska Center 400,,
+,Alaska 400: JB30625,,
+,JB30679 Alaska Center Common,,
+,Alaska Common JB30679,,
+,JB30720 Alaska Center Common,,
+,JB30737 Alaska Center Common,,
+,Alaska Common: JB30737,,
+,JB30743 Alaska Center Common,,
+,Alaska Common: JB30743,,
+,JB30832 Alaska Center Common,,
+,Alaska 440B: JB30841,,
+,Alaska Common: JB30931,,
+,JB30935 Alaska Center Common,,
+,JB30969 Alaska Center Common,,
+,JB30983 Alaska Center Common,,
+,JB30976 Alaska Center Common,,
+,Alaska Common: JB30976,,
+,JB31073 Alaska Center Common,,
+,Alaska Common: JB31073,,
+,JB31150 Alaska Center Common,,
+,Alaska Common: JB31150,,
+,JB31207 Alaska Center Common,,
+,Alaska Common: JB31207,,
+,JB31298 Alaska Center Common,,
+,Alaska Common: JB31298,,
+,JB31316 Alaska Center Common,,
+,Alaska Common: JB31316,,
+,JB31395 Alaska Center Common,,
+,JB31408 Alaska Center Common,,
+,Alaska Common: JB31408,,
+,JB31464 Alaska Center 100,,
+,JB31471 Alaska Center 104,,
+,alaska 104: JB31471,,
+,Alaska 100: JB31464,,
+,JB31074 Alaska Center 440,,
+,Alaska 440: JB31074,,
+,Alaska 104: JB31148,,
+,JB31148 Alaska Center 104,,
+,JB31529 Alaska Center Common,,
+,Alaska 104 JB31148,,
+,Alaska Common: JB31529,,
+,JB31619 Alaska Center Common,,
+,JB31615 Alaska Center Common,,
+,JB31620 Alaska Center 270,,
+,JB31616 Alaska Center Common,,
+,Alaska 270: JB31620,,
+,Alaska Common: JB31615,,
+,alaska common: JB31616,,
+,Alaska Common: JB31619,,
+,JB31642 Alaska Center 101,,
+,Alaska 101: JB31642,,
+,JB31165 Alaska Center Common,,
+,Alaska Common: JB31165,,
+,JB31716 Alaska Center Common,,
+,Alaska Common: JB31716,,
+,JB31729 Alaska Center Common,,
+,Alaska Common: JB31729,,
+,Alaska Center 101: JB31761,,
+,Alaska 312: JB31787,,
+,Alaska 270: JB31776,,
+,Alaska Common: JB31870,,
+,JB31907 Alaska Center 440,,
+,Alaska 440: JB31907,,
+,Alaska Center 104 JB31923,,
+,Alaska Center 104 JB31923,,
+,Alaska 104 JB31923,,
+,JB31934 Alaska Center 250,,
+,JB31832 Alaska Center Common,,
+,Alaska 250: JB31934,,
+,Alaska common: JB31957,,
+,Alaska Common: JB31617,,
+,Alaska Center Common JB31955,,
+,Alaska Center Common JB31990,,
+,Alaska Center Common JB32019,,
+,Alaska Center 104 JB31989,,
+,Alaska Center 440 JB32047,,
+,Alaska Center Common JB32014,,
+,Alaska Center Common JB32072,,
+,JB31344 Alaska Center Common,,
+,Alaska Common: JB31344,,
+,Alaska Center Common JB32143,,
+,Alaska Center Common JB32151,,
+,Alaska Center Common JB32218,,
+,Alaska Center Common JB32306,,
+,Alaska Center 100A JB32288,,
+,Alaska Center Common JB32303,,
+,Alaska Center Common JB32335,,
+,Alaska Center Common JB32363,,
+,Alaska Center Common JB32415,,
+,Alaska Center 100B JB32454,,
+,Alaska Center Common JB32469,,
+,Alaska Center Common JB32453,,
+,Alaska Center 400 JB32522,,
+,Alaska Center Common JB32525,,
+,Alaska Center 400 JB32522,,
+,Alaska Center Common JB32496,,
+,Alaska Center Common JB32544,,
+,Alaska Center 400 JB32589,,
+,Alaska Center Common JB31950,,
+,Alaska Center Common JB32667,,
+,Alaska Center Common JB32818,,
+,Alaska Center Common JB32834,,
+,Alaska Center 40 JB32836,,
