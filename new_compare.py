@@ -26,6 +26,8 @@ class MatchResult:
     record2_id: str
     record1_desc: str
     record2_desc: str
+    record1_amount: float
+    record2_amount: float
     similarity_score: float
     text_score: float
     number_score: float
@@ -144,6 +146,8 @@ class FuzzyMatcher:
                     record2_id=pay.id,
                     record1_desc=inv.description,
                     record2_desc=pay.description,
+                    record1_amount=float(inv.raw_data.get('Gross').replace(",","")),
+                    record2_amount=float(pay.raw_data.get('Amount').replace(",","")),
                     similarity_score=score,
                     text_score=text_score,
                     number_score=number_score,
@@ -175,6 +179,8 @@ class FuzzyMatcher:
                     record2_id=pay.id,
                     record1_desc=inv.description,
                     record2_desc=pay.description,
+                    record1_amount=float(inv.raw_data.get('Gross').replace(",","")),
+                    record2_amount=float(pay.raw_data.get('Amount').replace(",","")),
                     similarity_score=score,
                     text_score=text_score,
                     number_score=number_score,
@@ -183,8 +189,8 @@ class FuzzyMatcher:
                 matched_invoices.add(inv.id)
                 matched_payments.add(pay.id)
 
-        unmatched_invoices = [(inv.id,inv.description) for inv in table1 if inv.id not in matched_invoices]
-        unmatched_payments = [(pay.id,pay.description) for pay in table2 if pay.id not in matched_payments]
+        unmatched_invoices = [(inv.id,inv.description,float(inv.raw_data.get('Gross').replace(",",""))) for inv in table1 if inv.id not in matched_invoices]
+        unmatched_payments = [(pay.id,pay.description,float(pay.raw_data.get('Amount'.replace(",","")))) for pay in table2 if pay.id not in matched_payments]
 
         # Sort matches by descending similarity score
         matches.sort(key=lambda x: x.similarity_score, reverse=True)
@@ -210,15 +216,20 @@ def load_table(filepath: str, id_col: str, desc_col: str) -> List[Record]:
 
 def output_matches(matches: List[MatchResult], unmatched_invoices: List[str], unmatched_payments: List[str], output_path: str):
     with open(output_path, 'w') as f:
-        f.write("Invoice_Desc,Payment_Desc,Similarity,TextScore,NumberScore,Confidence\n")
+        f.write("Invoice_Desc,Invoice Amount,Payment_Desc,Patyment Amount,Similarity,TextScore,NumberScore,Confidence\n")
+        inv_total= 0.0
+        pay_total = 0.0
         for m in matches:
-            f.write(f"{m.record1_desc},{m.record2_desc},"
+            f.write(f"{m.record1_desc},{m.record1_amount},{m.record2_desc},{m.record2_amount},"
                     f"{m.similarity_score:.3f},{m.text_score:.3f},{m.number_score:.3f},{m.confidence}\n")
+            inv_total += m.record1_amount
+            pay_total += m.record2_amount
         #f.write("Invoice_ID,Payment_ID,Invoice_Desc,Payment_Desc,Similarity,TextScore,NumberScore,Confidence\n")
         #for m in matches:
         #    f.write(f"{m.record1_id},{m.record2_id},{m.record1_desc},{m.record2_desc},"
         #            f"{m.similarity_score:.3f},{m.text_score:.3f},{m.number_score:.3f},{m.confidence}\n")
         # Output unmatched invoices and payments
+        f.write(f",{inv_total:.2f},,{pay_total:.2f},,,\n")
         f.write('\n')
 
         # Unmatched Invoices
