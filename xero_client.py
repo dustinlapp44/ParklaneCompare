@@ -63,11 +63,12 @@ def get_tenant_id(access_token):
 # ------------------------------------------
 # Get invoices
 # ------------------------------------------
-def get_invoices(access_token, tenant_id, start_date, itype):
-    param_str = f'Date >= DateTime({start_date.replace("-", ", ")}) && Status != "DELETED" && Status != "VOIDED"'
+def get_invoices(access_token, tenant_id, start_date, end_date, itype, contact=None):
+    param_str = f'Date >= DateTime({start_date.replace("-", ", ")}) && Date <= DateTime({end_date.replace("-", ", ")}) && Status != "DELETED" && Status != "VOIDED"'
     if itype!=None:
         param_str += f' && Type == "{itype}"'
-        
+    if contact:
+        param_str += f' && Contact.Name == "{contact}"'
     params = {
         'where': param_str,
     }
@@ -133,11 +134,6 @@ def authorize_xero(org_name="Test"):
 # ------------------------------------------
 # Main function to get both invoices and payments
 # ------------------------------------------
-def pull_xero_data(access_token, tenant_id):
-    invoices = get_invoices(access_token, tenant_id)
-    payments = get_payments(access_token, tenant_id)
-
-    return invoices, payments
 
 def get_tenant_id_by_name(access_token, target_name):
     response = requests.get(

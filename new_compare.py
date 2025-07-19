@@ -5,6 +5,7 @@ from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from dateutil import parser
+from xero_client import authorize_xero, get_invoices
 
 
 
@@ -149,8 +150,8 @@ class FuzzyMatcher:
                     record2_id=pay.id,
                     record1_desc=inv.description,
                     record2_desc=pay.description,
-                    record1_amount=float(inv.raw_data.get('Gross').replace(",","")),
-                    record2_amount=float(pay.raw_data.get('Amount').replace(",","")),
+                    record1_amount=inv.raw_data.get('Gross'),
+                    record2_amount=pay.raw_data.get('Amount'),
                     similarity_score=score,
                     text_score=text_score,
                     number_score=number_score,
@@ -182,8 +183,8 @@ class FuzzyMatcher:
                     record2_id=pay.id,
                     record1_desc=inv.description,
                     record2_desc=pay.description,
-                    record1_amount=float(inv.raw_data.get('Gross').replace(",","")),
-                    record2_amount=float(pay.raw_data.get('Amount').replace(",","")),
+                    record1_amount=inv.raw_data.get('Gross'),
+                    record2_amount=pay.raw_data.get('Amount'),
                     similarity_score=score,
                     text_score=text_score,
                     number_score=number_score,
@@ -192,8 +193,8 @@ class FuzzyMatcher:
                 matched_invoices.add(inv.id)
                 matched_payments.add(pay.id)
 
-        unmatched_invoices = [(inv.id,inv.description,float(inv.raw_data.get('Gross').replace(",",""))) for inv in table1 if inv.id not in matched_invoices]
-        unmatched_payments = [(pay.id,pay.description,float(pay.raw_data.get('Amount').replace(",",""))) for pay in table2 if pay.id not in matched_payments]
+        unmatched_invoices = [(inv.id,inv.description,inv.raw_data.get('Gross')) for inv in table1 if inv.id not in matched_invoices]
+        unmatched_payments = [(pay.id,pay.description,pay.raw_data.get('Amount')) for pay in table2 if pay.id not in matched_payments]
 
         # Sort matches by descending similarity score
         matches.sort(key=lambda x: x.similarity_score, reverse=True)
@@ -204,15 +205,19 @@ class FuzzyMatcher:
 # Helper Functions
 # ================================
 
-def load_table(filepath: str, id_col: str, desc_col: str) -> List[Record]:
-    df = pd.read_csv(filepath, skiprows=1)
+def load_table(df, id_col: str, desc_col: str) -> List[Record]:
     
     # Add unique payment_id based on index
+    #for i in df.index:
+    #    df[id_col]=str(i)
     df[id_col] = [str(i) for i in df.index]
     
     matcher = FuzzyMatcher()
-    tmp = []
+    tmp=[]
     for _,row in df.iterrows():
+        #print(type(row))
+        #print(row)
+        #break
         tmp.append(matcher.create_record(row, id_col, desc_col))
     return tmp
     #return [matcher.create_record(row, id_col, desc_col) for _, row in df.iterrows()]
@@ -283,11 +288,41 @@ def output_all_results(matches: List[Tuple[str, str, float]], unmatched_invoices
     final_df.to_csv(output_file, index=False)
     print(f"✅ All results saved to {output_file}")
 
-def pull_pmc_data(start_date="2025-07-01", headers=None, itype=None):
+def pull_pmc_data(start_date="2025-07-01", end_date="2025-07-02", headers=None, itype=None):
 
     # Implement PMC data pulling logic here
     access_token, tenant_id = authorize_xero(org_name="PMC")
-    invoices = get_invoices(access_token, tenant_id, start_date, itype)
+    invoices = get_invoices(access_token, tenant_id, start_date, end_date, itype)
+    if not invoices:
+        print("No invoices found.")
+    else:
+        print(f"Found {len(invoices)} invoices.")
+
+    ret_invoices = []
+    if headers is not None:
+        for invoice in invoices:
+            pass
+            if invoice['Type'] not in headers.keys():
+                print(f"Skipping invoice with unsupported type: {invoice['Type']}")
+                continue
+            ret_invoice = {}
+            for col in headers[invoice['Type']]:
+                if col in invoice:
+                    ret_invoice[col] = invoice[col]
+                else:
+                    ret_invoice[col] = None
+            ret_invoices.append(ret_invoice)
+    else:
+        for invoice in invoices:
+            ret_invoices.append(invoice)
+
+    return ret_invoices
+
+def pull_property_data(start_date="2025-07-01", end_date="2025-07-02", headers=None, itype=None):
+
+    # Implement PMC data pulling logic here
+    access_token, tenant_id = authorize_xero(org_name="Parklane Properties")
+    invoices = get_invoices(access_token, tenant_id, start_date, end_date, itype, contact="Parklane Management Company")
     if not invoices:
         print("No invoices found.")
     else:
@@ -303,44 +338,6 @@ def pull_pmc_data(start_date="2025-07-01", headers=None, itype=None):
             for col in headers[invoice['Type']]:
                 if col in invoice:
                     ret_invoice[col] = invoice[col]
-                    #if col.count('Date'):
-                    #    date = parser.parse(invoice[col])
-                    #    ret_invoice[col] = date.strftime('%d %b %Y') if date else None
-                    #else:
-                    #    ret_invoice[col] = invoice[col]
-                else:
-                    ret_invoice[col] = None
-            ret_invoices.append(ret_invoice)
-    else:
-        for invoice in invoices:
-            ret_invoices.append(invoice)
-
-    return ret_invoices
-
-def pull_parklane_data(start_date="2025-07-01",headers=None, itype=None):
-
-    # Implement PMC data pulling logic here
-    access_token, tenant_id = authorize_xero(org_name="Parklane Properties")
-    invoices = get_invoices(access_token, tenant_id, start_date,itype)
-    if not invoices:
-        print("No invoices found.")
-    else:
-        print(f"Found {len(invoices)} invoices.")
-
-    ret_invoices = []
-    if headers is not None:
-        for invoice in invoices:
-            if invoice['Type'] not in headers.keys():
-                print(f"Skipping invoice with unsupported type: {invoice['Type']}")
-                continue
-            ret_invoice = {}
-            for col in headers[invoice['Type']]:
-                if col in invoice:
-                    if col.count('Date'):
-                        date = parser.parse(invoice[col])
-                        ret_invoice[col] = date.strftime('%d %b %Y') if date else None
-                    else:
-                        ret_invoice[col] = invoice[col]
                 else:
                     ret_invoice[col] = None
             ret_invoices.append(ret_invoice)
@@ -359,7 +356,7 @@ def get_examples():
         else:
             tmp_pmc[invoice['Type']] = invoice
     
-    payments = pull_parklane_data(start_date="2025-05-01", headers=None, itype=None)
+    payments = pull_property_data(start_date="2025-05-01", headers=None, itype=None)
     tmp_parklane = {}
     for payment in payments:
         if payment['Type'] in tmp_parklane.keys():
@@ -373,10 +370,22 @@ def get_examples():
     for x in tmp_parklane:
         print(x, tmp_parklane[x].keys())
 
+def get_test_data():
+    invoices = pull_pmc_data(start_date="2025-05-01", headers=None, itype='ACCREC')
+    payments = pull_property_data(start_date="2025-05-01", headers=None, itype='ACCPAY')
+    # Example data for testing
+    df = pd.DataFrame(invoices)
+    df.to_csv('test_data_pmc.csv', index=False)
+    df = pd.DataFrame(payments)
+    df.to_csv('test_data_payments.csv', index=False)
+
 def pmc_data_cleanup(in_dict: list[dict]):
     ret_list = []
     source_str=''
     source_flag = False
+    ref_str = ''
+    inv_str= ''
+    com_flag = False
     for item in in_dict:
         new_dict = {}
         for key, value in item.items():
@@ -385,6 +394,13 @@ def pmc_data_cleanup(in_dict: list[dict]):
                 source_flag = False
             elif key == 'Status':
                 source_flag = True
+
+            if com_flag:
+                new_dict['Combined'] = f"{ref_str} {inv_str}"
+                com_flag = False
+                ref_str = ''
+                inv_str = ''    
+
             if key == 'DateString':
                 if value is not None:
                     new_dict['Date'] = parser.parse(value).strftime('%d %b %Y')
@@ -406,25 +422,121 @@ def pmc_data_cleanup(in_dict: list[dict]):
                 elif value == 'ACCPAY':
                     source_str = 'Payable Invoice'
                 continue
+            elif key == 'Total':
+                new_dict['Gross'] = value
+            elif key == 'AmountDue':
+                new_dict['Balance'] = value
+            elif key == 'Reference':
+                if value is not None:
+                    ref_str = value
+                com_flag = True
+                new_dict[key] = value
+            elif key == 'InvoiceNumber':
+                if value is not None:
+                    inv_str = value
+                new_dict[key] = value
             else:
                 new_dict[key] = value
             
         ret_list.append(new_dict)
     return ret_list
-            #if item['DateString'] is not None:
-            #    item['Date'] = parser.parse(item['DateString']).strftime('%d %b %Y')
-            #if item['DueDateString'] is not None:
-            #    item['DueDate'] = parser.parse(item['DueDateString']).strftime('%d %b %Y')
+
+def property_data_cleanup(in_dict: list[dict]):
+    ret_list = []
+    source_str=''
+    source_flag = False
+    for item in in_dict:
+        new_dict = {}
+        for key, value in item.items():   
+            if source_flag:
+                new_dict['Source'] = source_str
+                source_flag = False
+
+            if key == 'DateString':
+                if value is not None:
+                    new_dict['Date'] = parser.parse(value).strftime('%d %b %Y')
+                else:
+                    new_dict['Date'] = None
+            elif key == 'DueDateString':
+                if value is not None:
+                    new_dict['DueDate'] = parser.parse(value).strftime('%d %b %Y')
+                else:
+                    new_dict['DueDate'] = None
+            elif key == 'Contact':
+                if 'Name' in value:
+                    new_dict['Contact'] = value['Name']
+                else:
+                    new_dict['Contact'] = None
+                source_flag = True
+            elif key == 'InvoiceNumber':
+                if value is not None:
+                    new_dict['Reference'] = value
+                else:
+                    new_dict['InvoiceNumber'] = None
+            elif key == 'Type':
+                if value == 'ACCREC':
+                    source_str = 'Recievable Invoice'
+                elif value == 'ACCPAY':
+                    source_str = 'Payable Invoice'
+                continue
+            
+            ## Will need to adjust these
+            elif key == 'Total':
+                new_dict['Amount'] = value
+            elif key == 'AmountDue':
+                new_dict['Balance'] = value
+            
+            else:
+                new_dict[key] = value
+            
+        ret_list.append(new_dict)
+    return ret_list
+
+def create_file(data: List[Dict], filename: str):
+    df = pd.DataFrame(data)
+
+    # Save to CSV
+    df.to_csv(filename, index=False)
+    print(f"File created: {filename}")
+
+def float_conv(x):
+    if pd.isnull(x):
+        return np.nan
+    elif isinstance(x, str):
+        return float(x.replace(",", ""))
+    else:
+        return float(x)
 
 # Main
 # ================================
 
 if __name__ == "__main__":
+    
+    get_test_data()
+    
+    #Invoice Date,Contact,Source,Reference,Planned Date,Amount,Balance,Status
+    headers = {
+                'ACCREC':['Type','InvoiceNumber','DateString','DueDateString','Reference','Total','AmountDue','Status','InvoiceSent'],
+                'ACCPAY':['Type','DateString', 'Contact', 'InvoiceNumber', 'DueDateString', 'Total', 'AmountDue', 'Status']
+                }
+    
+    start_date = "2024-01-24"
+    end_date = "2024-05-01"
+
+    invoices = pull_pmc_data(start_date=start_date, end_date=end_date, headers=headers, itype='ACCREC')
+    invoices = pmc_data_cleanup(invoices)
+    create_file(invoices, 'Test- PMC Data.csv')
+
+    payments = pull_property_data(start_date=start_date, end_date=end_date, headers=headers, itype='ACCPAY')
+    payments = property_data_cleanup(payments)
+    create_file(payments, 'Test- Property Data.csv')
+    
+    
     # Filepaths and column names
-    invoice_file = 'Alaska Center - PMC Data.csv'
+    invoice_file = 'Test- PMC Data.csv'
     no_payment_file = 'Alaska Center - No Matching Payments Data.csv'
 
-    payment_file = 'Alaska Center - Property Data.csv'
+    payment_file = 'Test- Property Data.csv'
     no_invoice_file = 'Alaska Center - No Matching Invoices Data.csv'
 
     output_file = 'output_matches.csv'
@@ -435,9 +547,16 @@ if __name__ == "__main__":
     payment_id_col = 'PaymentID'   # replace with your actual ID column name
     payment_desc_col = 'Reference'
 
-    # Load tables
-    invoices = load_table(invoice_file, invoice_id_col, invoice_desc_col)
-    payments = load_table(payment_file, payment_id_col, payment_desc_col)
+    # Read csv into df
+    df = pd.read_csv(invoice_file)
+    df['Gross'] = df['Gross'].apply(float_conv)
+    df['Balance'] = df['Balance'].apply(float_conv)
+    invoices = load_table(df, invoice_id_col, invoice_desc_col)
+    
+    df = pd.read_csv(payment_file)
+    df['Amount'] = df['Amount'].apply(float_conv)
+    df = df[df['Contact'] == 'Parklane Management Company']
+    payments = load_table(df, payment_id_col, payment_desc_col)    
 
     # Match
     matcher = FuzzyMatcher(text_weight=0.3, number_weight=0.7, similarity_threshold=0.5)
@@ -448,7 +567,7 @@ if __name__ == "__main__":
     #output_unmatched(unmatched_invoices, unmatched_payments, no_invoice_file, no_payment_file)
 
 
-    from xero_client import authorize_xero, get_invoices
+    
 
     #get_examples()
     # 
@@ -466,28 +585,11 @@ if __name__ == "__main__":
     # 'Contact', 'DateString', 'Date', 'DueDateString', 'DueDate',                      'Status', 
     # 'LineAmountTypes', 'LineItems', 'SubTotal', 'TotalTax', 'Total', 'UpdatedDateUTC', 'CurrencyCode'
 
-    headers = {
-                'ACCREC':['Type','InvoiceNumber','DateString','DueDateString','Reference','AmountPaid','AmountDue','Status','InvoiceSent'],
-                'ACCPAY':['Type','Date','InvoiceNumber','Total','Contact','Type','Status','Source','InvoiceSent'],
-               }
     
-    invoices = pull_pmc_data(start_date="2025-05-01", headers=headers, itype='ACCREC')
-    invoices = pmc_data_cleanup(invoices)
-    for invoice in invoices:
-        print(invoice)
-        break
-
-       # try:
-       #     print(f"Reference: {invoice['InvoiceNumber']}, Amount: {invoice['Total']}, Contact: {invoice['Contact']['Name']}")
-       # except KeyError as e:
-       #     print("Epic Failure, key Error:", e)
-       #     print(invoice)
-       #     #sys.exit(1)
-    
-    payments = pull_parklane_data(start_date="2025-05-01", headers=None, itype='ACCPAY')
-    for payment in payments:
-        print(payment)
-        break
+    #payments = pull_parklane_data(start_date="2025-05-01", headers=None, itype='ACCPAY')
+    #for payment in payments:
+    #    print(payment)
+    #    break
         #try:
         #    print(f"Reference: {payment['InvoiceNumber']}, Amount: {payment['Total']}, Contact: {payment['Contact']['Name']}")
         #except KeyError as e:
