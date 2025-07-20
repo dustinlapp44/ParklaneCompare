@@ -1,4 +1,4 @@
-import re, sys
+import re, sys, os
 import math
 import pandas as pd
 from typing import List, Dict, Tuple, Optional
@@ -222,7 +222,7 @@ def load_table(df, id_col: str, desc_col: str) -> List[Record]:
     return tmp
     #return [matcher.create_record(row, id_col, desc_col) for _, row in df.iterrows()]
 
-def output_matches(matches: List[MatchResult], unmatched_invoices: List[str], unmatched_payments: List[str], output_path: str):
+def output_matches(matches: List[MatchResult], unmatched_invoices: List[tuple], unmatched_payments: List[tuple], output_path: str):
     with open(output_path, 'w') as f:
         f.write("Invoice_Desc,Invoice Amount,Payment_Desc,Patyment Amount,Similarity,TextScore,NumberScore,Confidence\n")
         inv_total= 0.0
@@ -242,11 +242,11 @@ def output_matches(matches: List[MatchResult], unmatched_invoices: List[str], un
 
         # Unmatched Invoices
         for i in unmatched_invoices:
-            f.write(f"{i},,,,,\n")
+            f.write(f"{i[0]},{i[1]},,,,\n")
 
         # Unmatched Payments
         for p in unmatched_payments:
-            f.write(f",{p},,\n")
+            f.write(f",,{p[0]},{p[1]},\n")
 
 
     print(f"✅ Matches saved to {output_path}")
@@ -288,11 +288,11 @@ def output_all_results(matches: List[Tuple[str, str, float]], unmatched_invoices
     final_df.to_csv(output_file, index=False)
     print(f"✅ All results saved to {output_file}")
 
-def pull_pmc_data(start_date="2025-07-01", end_date="2025-07-02", headers=None, itype=None):
+def pull_pmc_data(start_date="2025-07-01", end_date="2025-07-02", headers=None, itype=None, contact=None):
 
     # Implement PMC data pulling logic here
     access_token, tenant_id = authorize_xero(org_name="PMC")
-    invoices = get_invoices(access_token, tenant_id, start_date, end_date, itype)
+    invoices = get_invoices(access_token, tenant_id, start_date, end_date, itype, contact=contact)
     if not invoices:
         print("No invoices found.")
     else:
@@ -498,6 +498,15 @@ def create_file(data: List[Dict], filename: str):
     # Save to CSV
     df.to_csv(filename, index=False)
     print(f"File created: {filename}")
+    
+def create_dir_file(data: List[Dict], filename: str, dir_name: str):
+    df = pd.DataFrame(data)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name, exist_ok=True)
+    filename = os.path.join(dir_name, filename)
+    # Save to CSV
+    df.to_csv(filename, index=False)
+    print(f"File created: {filename}")
 
 def float_conv(x):
     if pd.isnull(x):
@@ -512,90 +521,112 @@ def float_conv(x):
 
 if __name__ == "__main__":
     
-    get_test_data()
-    
-    #Invoice Date,Contact,Source,Reference,Planned Date,Amount,Balance,Status
     headers = {
                 'ACCREC':['Type','InvoiceNumber','DateString','DueDateString','Reference','Total','AmountDue','Status','InvoiceSent'],
                 'ACCPAY':['Type','DateString', 'Contact', 'InvoiceNumber', 'DueDateString', 'Total', 'AmountDue', 'Status']
                 }
     
-    start_date = "2024-01-24"
-    end_date = "2024-05-01"
+    property_aliases = {
+    'Barcelona Apartments': ['Barcelona'],
+    'Grove Street Apartments': ['Grove'],
+    'Alaska Center': ['Alaska'],
+    'Hillcreek Apartments': ['Hillcreek'],
+    'Magnolia Apartments': ['Magnolia', 'Magonila'],
+    'Parkhill Apartments': ['Parkhill'],
+    'Parklane Apartments': ['Parklane'],
+    'Premier Apartments': ['Premier'],
+    'Quail Park Apartments': ['Quail Park'],
+    'State Street Apartments': ['State Street'],
+    'Villa Montagna Apartments': ['Villa Montagna'],
+    'Offices-Warm Springs': ['Offices-Warm Springs', 'Offices Warm Springs', 'Offices', 'Office'],
+    'Warm Springs Apartments': ['Warm Springs Apartments', 'Warm Springs Apts', 'Warm Springs'],
+    'Washington Street Apartments': ['Washington'],
+    'Parkcenter': ['ParkCenter'],
+    'Franklin Plaza': ['Franklin Plaza', 'Plaza'],
+    'Union Block Building': ['Union Block'],
+    'Camels Back Apartment': ['Camels Back', 'Camels'],
+    'Derr Building': ['Derr', 'Deer'],
+    'Idaho Building': ['Idaho'],
+    'Franklin Street': ['Franklin Street', 'Franklin St'],
+    'Idanha': ['Idanha'],
+    'Homestead Apartments': ['Homestead', 'Homestread', 'Homested'],
 
-    invoices = pull_pmc_data(start_date=start_date, end_date=end_date, headers=headers, itype='ACCREC')
-    invoices = pmc_data_cleanup(invoices)
-    create_file(invoices, 'Test- PMC Data.csv')
+}
+
+    
+    start_date = "2024-01-01"
+    end_date = "2025-05-31"
 
     payments = pull_property_data(start_date=start_date, end_date=end_date, headers=headers, itype='ACCPAY')
     payments = property_data_cleanup(payments)
-    create_file(payments, 'Test- Property Data.csv')
+    create_file(payments, 'All Property Data.csv')
+    unmatched_df = pd.read_csv('All Property Data.csv')
     
     
-    # Filepaths and column names
-    invoice_file = 'Test- PMC Data.csv'
-    no_payment_file = 'Alaska Center - No Matching Payments Data.csv'
+    all_length = len(unmatched_df)
+    sum_length = 0
+    for property_name, aliases in property_aliases.items():
+        print(f"Processing property: {property_name}")
 
-    payment_file = 'Test- Property Data.csv'
-    no_invoice_file = 'Alaska Center - No Matching Invoices Data.csv'
+        invoices = pull_pmc_data(start_date=start_date, end_date=end_date, headers=headers, itype='ACCREC', contact=property_name)
+        invoices = pmc_data_cleanup(invoices)
+        
+        work_dir = f'Property_Data/{property_name}/'
+        create_dir_file(invoices, f'{property_name} - PMC Data.csv', work_dir)
 
-    output_file = 'output_matches.csv'
+        # Build regex pattern to match any alias (case-insensitive)
+        #pattern = '|'.join([f"(?i){alias}" for alias in aliases])
+        pattern = '(?i)' + '|'.join(aliases)
+        property_df = unmatched_df[unmatched_df['Reference'].str.contains(pattern, na=False, regex=True)]
 
-    invoice_id_col = 'InvoiceID'   # replace with your actual ID column name
-    invoice_desc_col = 'Combined'
+        sum_length += len(property_df)
+        create_dir_file(property_df, f'{property_name} - Property Data.csv', work_dir)
 
-    payment_id_col = 'PaymentID'   # replace with your actual ID column name
-    payment_desc_col = 'Reference'
+        # Remove matched rows from unmatched_df
+        unmatched_df = unmatched_df.drop(property_df.index)
 
-    # Read csv into df
-    df = pd.read_csv(invoice_file)
-    df['Gross'] = df['Gross'].apply(float_conv)
-    df['Balance'] = df['Balance'].apply(float_conv)
-    invoices = load_table(df, invoice_id_col, invoice_desc_col)
-    
-    df = pd.read_csv(payment_file)
-    df['Amount'] = df['Amount'].apply(float_conv)
-    df = df[df['Contact'] == 'Parklane Management Company']
-    payments = load_table(df, payment_id_col, payment_desc_col)    
+    print(f"Number of unmatched rows: {len(unmatched_df)}")
+    create_file(unmatched_df, 'Unmatched Property Data.csv')
 
-    # Match
-    matcher = FuzzyMatcher(text_weight=0.3, number_weight=0.7, similarity_threshold=0.5)
-    matches, unmatched_invoices, unmatched_payments = matcher.find_best_matches(invoices, payments)
+    print(f"All Property Data Length: {all_length}")
+    print(f"Sum of Property Data Lengths: {sum_length}")
 
-    # Output
-    output_matches(matches, [i[1] for i in unmatched_invoices], [p[1] for p in unmatched_payments], output_file)
-    #output_unmatched(unmatched_invoices, unmatched_payments, no_invoice_file, no_payment_file)
 
 
     
+    for property_name, aliases in property_aliases.items():
+        # Filepaths and column names
+        work_dir = f'Property_Data/{property_name}/'
+        invoice_file = f'{property_name} - PMC Data.csv'
+        payment_file = f'{property_name} - Property Data.csv'
+        output_file = f'{property_name} - PMC vs Property.csv'
+        
+        
+        invoice_id_col = 'InvoiceID'   # replace with your actual ID column name
+        invoice_desc_col = 'Combined'
 
-    #get_examples()
-    # 
-    # PMC Data --> Invoice,Date,Due Date,Reference,Combined,Gross,Balance,Status,Source,Invoice Sent
+        payment_id_col = 'PaymentID'   # replace with your actual ID column name
+        payment_desc_col = 'Reference'
 
-    # ACCREC - 'Type', 'InvoiceID', 'InvoiceNumber', 'Reference', 'Payments', 'CreditNotes', 
-    # 'Prepayments', 'Overpayments', 'AmountDue', 'AmountPaid', 'AmountCredited', 'CurrencyRate', 
-    # 'IsDiscounted', 'HasAttachments', 'InvoiceAddresses', 'HasErrors',                    'InvoicePaymentServices', 
-    # 'Contact', 'DateString', 'Date', 'DueDateString', 'DueDate', 'BrandingThemeID', 'Status', 
-    # 'LineAmountTypes', 'LineItems', 'SubTotal', 'TotalTax', 'Total', 'UpdatedDateUTC', 'CurrencyCode'
+        # Read csv into df
+        df = pd.read_csv(os.path.join(work_dir, invoice_file))
+        df['Gross'] = df['Gross'].apply(float_conv)
+        df['Balance'] = df['Balance'].apply(float_conv)
+        invoices = load_table(df, invoice_id_col, invoice_desc_col)
 
-    # ACCPAY - 'Type', 'InvoiceID', 'InvoiceNumber', 'Reference', 'Payments', 'CreditNotes', 
-    # 'Prepayments', 'Overpayments', 'AmountDue', 'AmountPaid', 'AmountCredited', 'CurrencyRate', 
-    # 'IsDiscounted', 'HasAttachments', 'InvoiceAddresses', 'HasErrors', 'RepeatingInvoiceID', 'InvoicePaymentServices',
-    # 'Contact', 'DateString', 'Date', 'DueDateString', 'DueDate',                      'Status', 
-    # 'LineAmountTypes', 'LineItems', 'SubTotal', 'TotalTax', 'Total', 'UpdatedDateUTC', 'CurrencyCode'
+        df = pd.read_csv(os.path.join(work_dir, payment_file))
+        df['Amount'] = df['Amount'].apply(float_conv)
+        df = df[df['Contact'] == 'Parklane Management Company']
+        payments = load_table(df, payment_id_col, payment_desc_col)    
 
-    
-    #payments = pull_parklane_data(start_date="2025-05-01", headers=None, itype='ACCPAY')
-    #for payment in payments:
-    #    print(payment)
-    #    break
-        #try:
-        #    print(f"Reference: {payment['InvoiceNumber']}, Amount: {payment['Total']}, Contact: {payment['Contact']['Name']}")
-        #except KeyError as e:
-        #    print("Epic Failure, key Error:", e)
-        #    print(payment)
-        #    #sys.exit(1)
+        # Match
+        matcher = FuzzyMatcher(text_weight=0.3, number_weight=0.7, similarity_threshold=0.5)
+        matches, unmatched_invoices, unmatched_payments = matcher.find_best_matches(invoices, payments)
+
+        # Output
+        output_matches(matches, [(i[1],i[2]) for i in unmatched_invoices], [(p[1],p[2]) for p in unmatched_payments], os.path.join(work_dir, output_file))
+
+
 
   
     

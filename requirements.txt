@@ -1,1 +1,4 @@
-xero-python
+pandas
+openpyxl
+python-dotenv
+requests
