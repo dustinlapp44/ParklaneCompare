@@ -2,3 +2,6 @@ pandas
 openpyxl
 python-dotenv
 requests
+pydrive2
+gspread
+google-auth

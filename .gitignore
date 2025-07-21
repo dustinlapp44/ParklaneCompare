@@ -1,3 +1,7 @@
 *.csv
 *tokens*
 *pycache*
+test*
+*.log
+*.json
+
