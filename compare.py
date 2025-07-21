@@ -63,6 +63,8 @@ class Record:
     """Represents a data record with text and numeric components"""
     id: str
     description: str
+    date: str
+    amount: float
     numbers: List[str]
     raw_data: Dict
     invoice: Optional[str] = None
@@ -71,14 +73,8 @@ class Record:
 @dataclass
 class MatchResult:
     """Represents a match between two records"""
-    record1_id: str
-    record1_desc: str
-    record1_amount: float
-    record1_date: str
-    record2_id: str
-    record2_desc: str
-    record2_amount: float
-    record2_date: str
+    record1: Record
+    record2: Record
     similarity_score: float
     text_score: float
     number_score: float
@@ -153,13 +149,13 @@ class FuzzyMatcher:
 
     def create_record(self, row: Dict, id_col: str, desc_col: str) -> Record:
         desc = str(row.get(desc_col, ''))
-        if desc.count('Alaska Common JB28235'):
-             pass
         rec_id = str(row.get(id_col, desc))  # Fallback to description if ID missing
+        amount = row.get('Gross', 0.0) if 'Gross' in row else row.get('Amount', 0.0)
+        date = row.get('Date', '') if 'Date' in row else row.get('DateString', '')
         numbers = self.extract_numbers(desc)
         invoice = self.extract_invoice(desc)
         job = self.extract_job(desc)
-        return Record(id=rec_id, description=desc, numbers=numbers, raw_data=row, invoice=invoice, job=job)
+        return Record(id=rec_id, description=desc, amount=amount, date=date, numbers=numbers, raw_data=row, invoice=invoice, job=job)
 
     def extract_invoice(self, row: str) -> Optional[str]:
         """Extract invoice number from row data"""
@@ -180,84 +176,47 @@ class FuzzyMatcher:
         else:
             return None
     
-    def find_best_matches(self, table1: List[Record], table2: List[Record]) -> Tuple[List[MatchResult], List[str], List[str]]:
-        """Find best matches between table1 and table2 with deduplication"""
-        matches = []
+    def find_best_matches(self, table1: List[Record], table2: List[Record]) -> Tuple[List[MatchResult], List[Record], List[Record]]:
+        """Find best matches globally between table1 and table2 with deduplication"""
+
+        potential_matches = []
         matched_invoices = set()
         matched_payments = set()
 
-        # Pass 1: Invoices -> Payments
+        # Build list of all possible matches above threshold
         for inv in table1:
-            best_score = 0
-            best_match = None
             for pay in table2:
-                if pay.id in matched_payments:
-                    continue
                 score, text_score, number_score, amount_score = self.calculate_similarity(inv, pay)
 
-                if score >= self.similarity_threshold and score > best_score:
-                    best_score = score
-                    best_match = (pay, score, text_score, number_score, amount_score)
+                if score >= self.similarity_threshold:
+                    potential_matches.append(MatchResult(
+                        record1=inv,
+                        record2=pay,
+                        similarity_score=score,
+                        text_score=text_score,
+                        number_score=number_score,
+                        confidence=self.get_confidence(score)
+                    ))
 
-            if best_match:
-                pay, score, text_score, number_score, amount_score = best_match
-                matches.append(MatchResult(
-                    record1_id=inv.id,
-                    record2_id=pay.id,
-                    record1_desc=inv.description,
-                    record2_desc=pay.description,
-                    record1_amount=inv.raw_data.get('Gross'),
-                    record2_amount=pay.raw_data.get('Amount'),
-                    record1_date=inv.raw_data.get('Date'),
-                    record2_date=pay.raw_data.get('Date'),
-                    similarity_score=score,
-                    text_score=text_score,
-                    number_score=number_score,
-                    confidence=self.get_confidence(score)
-                ))
-                matched_invoices.add(inv.id)
-                matched_payments.add(pay.id)
+        # Sort all potential matches by descending similarity score
+        potential_matches.sort(key=lambda x: x.similarity_score, reverse=True)
 
-        # Pass 2: Payments -> Invoices for unmatched payments
-        for pay in table2:
-            if pay.id in matched_payments:
-                ## Already matched on the first pass
-                continue
-            best_score = 0
-            best_match = None
-            for inv in table1:
-                if inv.id in matched_invoices:
-                    ## Already matched on the first pass
-                    continue
-                score, text_score, number_score, amount_score = self.calculate_similarity(inv, pay)
-                if score >= self.similarity_threshold and score > best_score:
-                    best_score = score
-                    best_match = (inv, score, text_score, number_score, amount_score)
+        final_matches = []
+        for match in potential_matches:
+            inv_id = match.record1.id
+            pay_id = match.record2.id
 
-            if best_match:
-                inv, score, text_score, number_score, amount_score = best_match
-                matches.append(MatchResult(
-                    record1_id=inv.id,
-                    record2_id=pay.id,
-                    record1_desc=inv.description,
-                    record2_desc=pay.description,
-                    record1_amount=inv.raw_data.get('Gross'),
-                    record2_amount=pay.raw_data.get('Amount'),
-                    similarity_score=score,
-                    text_score=text_score,
-                    number_score=number_score,
-                    confidence=self.get_confidence(score)
-                ))
-                matched_invoices.add(inv.id)
-                matched_payments.add(pay.id)
+            if inv_id not in matched_invoices and pay_id not in matched_payments:
+                final_matches.append(match)
+                matched_invoices.add(inv_id)
+                matched_payments.add(pay_id)
 
-        unmatched_invoices = [(inv.id,inv.description,inv.raw_data.get('Gross'),inv.raw_data.get("Date")) for inv in table1 if inv.id not in matched_invoices]
-        unmatched_payments = [(pay.id,pay.description,pay.raw_data.get('Amount'),pay.raw_data.get("Date")) for pay in table2 if pay.id not in matched_payments]
+        # Identify unmatched invoices and payments
+        unmatched_invoices = [inv for inv in table1 if inv.id not in matched_invoices]
+        unmatched_payments = [pay for pay in table2 if pay.id not in matched_payments]
 
-        # Sort matches by descending similarity score
-        matches.sort(key=lambda x: x.similarity_score, reverse=True)
+        return final_matches, unmatched_invoices, unmatched_payments
 
-        return matches, unmatched_invoices, unmatched_payments
 
 # ================================
 # Helper Functions
@@ -280,17 +239,17 @@ def load_table(df, id_col: str, desc_col: str) -> List[Record]:
     return tmp
     #return [matcher.create_record(row, id_col, desc_col) for _, row in df.iterrows()]
 
-def output_matches(matches: List[MatchResult], unmatched_invoices: List[tuple], unmatched_payments: List[tuple], output_path: str):
+def output_matches(matches: List[MatchResult], unmatched_invoices: List[Record], unmatched_payments: List[Record], output_path: str):
     with open(output_path, 'w') as f:
         f.write("Date,PMC Description,PMC Amount,Date,Property Description,Property Amount,Similarity,TextScore,NumberScore,Confidence\n")
         inv_total= 0.0
         pay_total = 0.0
         for m in matches:
-            f.write(f"{m.record1_date},{m.record1_desc},{m.record1_amount},"
-                    f"{m.record2_date},{m.record2_desc},{m.record2_amount},"
+            f.write(f"{m.record1.date},{m.record1.description},{m.record1.amount},"
+                    f"{m.record2.date},{m.record2.description},{m.record2.amount},"
                     f"{m.similarity_score:.3f},{m.text_score:.3f},{m.number_score:.3f},{m.confidence}\n")
-            inv_total += m.record1_amount
-            pay_total += m.record2_amount
+            inv_total += m.record1.amount
+            pay_total += m.record2.amount
         #f.write("Invoice_ID,Payment_ID,Invoice_Desc,Payment_Desc,Similarity,TextScore,NumberScore,Confidence\n")
         #for m in matches:
         #    f.write(f"{m.record1_id},{m.record2_id},{m.record1_desc},{m.record2_desc},"
@@ -301,51 +260,16 @@ def output_matches(matches: List[MatchResult], unmatched_invoices: List[tuple], 
 
         # Unmatched Invoices
         for i in unmatched_invoices:
-            f.write(f"{i[2]},{i[0]},{i[1]},,,,\n")
+            f.write(f"{i.date},{i.description},{i.amount},,,,\n")
 
         # Unmatched Payments
         for p in unmatched_payments:
-            f.write(f",,,{p[2]},{p[0]},{p[1]},\n")
+            f.write(f",,,{p.date},{p.description},{p.amount},\n")
 
 
     print(f"✅ Matches saved to {output_path}")
     print(f"🔴 Unmatched Invoices: {len(unmatched_invoices)}")
     print(f"🔴 Unmatched Payments: {len(unmatched_payments)}")
-
-def output_unmatched(unmatched_invoices: List[str], unmatched_payments: List[str], no_invoice_file: str, no_payment_file: str):
-    pd.DataFrame(unmatched_invoices, columns=['Invoice Description']).to_csv(no_invoice_file, index=False)
-    pd.DataFrame(unmatched_payments, columns=['Payment Description']).to_csv(no_payment_file, index=False)
-    print(f"🔴 Unmatched Invoices saved to {no_invoice_file}")
-    print(f"🔴 Unmatched Payments saved to {no_payment_file}")
-
-def output_all_results(matches: List[Tuple[str, str, float]], unmatched_invoices: List[Tuple[str, str]], unmatched_payments: List[Tuple[str, str]], output_file: str):
-    """
-    matches: list of tuples (invoice_id, payment_id, score)
-    unmatched_invoices: list of tuples (invoice_id, invoice_description)
-    unmatched_payments: list of tuples (payment_id, payment_description)
-    """
-
-    # Create DataFrame for matches
-    matches_df = pd.DataFrame(matches, columns=['Invoice ID', 'Payment ID', 'Score'])
-
-    # Create DataFrame for unmatched invoices with extra empty columns for spacing
-    unmatched_invoices_df = pd.DataFrame(unmatched_invoices, columns=['Invoice ID', 'Invoice Description'])
-    # Add empty columns for spacing
-    for i in range(3):  # Assuming 3 columns in matches
-        unmatched_invoices_df.insert(0, f'Empty_{i}', '')
-
-    # Create DataFrame for unmatched payments with extra empty columns before their data
-    unmatched_payments_df = pd.DataFrame(unmatched_payments, columns=['Payment ID', 'Payment Description'])
-    # Add empty columns for spacing
-    for i in range(3 + unmatched_invoices_df.shape[1]):  # Shift to the right after matches and unmatched_invoices
-        unmatched_payments_df.insert(0, f'Empty_{i}', '')
-
-    # Concatenate all parts
-    final_df = pd.concat([matches_df, unmatched_invoices_df, unmatched_payments_df], ignore_index=True)
-
-    # Save to CSV
-    final_df.to_csv(output_file, index=False)
-    print(f"✅ All results saved to {output_file}")
 
 def pull_pmc_data(start_date="2025-07-01", end_date="2025-07-02", headers=None, itype=None, contact=None):
 
@@ -611,7 +535,24 @@ def pull_all_data(start_date="2025-07-01", end_date="2025-07-02", headers=header
             print(f"All Property Data Length: {all_length}")
             print(f"Sum of Property Data Lengths: {sum_length}")    
 
-def compare_property_data(property_name: str):
+def overwrite_with_local_files(overwrite: List[str]):
+    df = pd.read_csv(overwrite[0])
+    df['Gross'] = df['Gross'].apply(float_conv)
+    df['Balance'] = df['Balance'].apply(float_conv)
+    invoices = load_table(df, invoice_id_col, invoice_desc_col)
+    df = pd.read_csv(overwrite[1])
+    df['Amount'] = df['Amount'].apply(float_conv)
+    df = df[df['Contact'] == 'Parklane Management Company']
+    payments = load_table(df, payment_id_col, payment_desc_col) 
+    return invoices, payments 
+
+def compare_property_data(property_name: str, overwrite=False):
+    if overwrite!=False:
+        invoices, payments = overwrite_with_local_files(overwrite)
+        matcher = FuzzyMatcher(text_weight=0.25, number_weight=0.55, amount_weight=0.2, similarity_threshold=0.6)
+        matches, unmatched_invoices, unmatched_payments = matcher.find_best_matches(invoices, payments)
+        return matches, unmatched_invoices, unmatched_payments
+    
     # Read csv into df
     df = pd.read_csv(invoice_path_template % (property_name, property_name))
     df['Gross'] = df['Gross'].apply(float_conv)
@@ -628,7 +569,7 @@ def compare_property_data(property_name: str):
     matches, unmatched_invoices, unmatched_payments = matcher.find_best_matches(invoices, payments)
 
     # Output
-    output_matches(matches, [(i[1],i[2],i[3]) for i in unmatched_invoices], [(p[1],p[2],p[3]) for p in unmatched_payments], output_path=output_path_template % (property_name, property_name))
+    output_matches(matches, [inv for inv in unmatched_invoices], [pay for pay in unmatched_payments], output_path=output_path_template % (property_name, property_name))
     return matches, unmatched_invoices, unmatched_payments
 
 def compare_all_data():
@@ -654,7 +595,7 @@ if __name__ == "__main__":
     start_date = "2024-01-01"
     end_date = "2025-05-31"
 
-    pull_all_data(start_date=start_date, end_date=end_date, pull_new_data=pull_new_data)
+    #pull_all_data(start_date=start_date, end_date=end_date, pull_new_data=pull_new_data)
     compare_all_data()
     
 
