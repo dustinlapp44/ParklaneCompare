@@ -11,10 +11,34 @@ TOKEN_FILE = 'xero_tokens.json'
 # Load saved tokens if available
 # ------------------------------------------
 def load_tokens():
-    if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE, 'r') as f:
-            return json.load(f)
-    return None
+    try:
+        with open("xero_tokens.json", "r") as f:
+            content = f.read()
+            if not content.strip():
+                print("Token file is empty.")
+                return None
+            return json.loads(content)
+    except json.JSONDecodeError as e:
+        print("Token file contains invalid JSON:", e)
+        return None
+    except FileNotFoundError:
+        print("Token file not found.")
+        return None
+    
+def get_invoices_for_db(access_token, tenant_id, start_date, end_date, page=1):
+    url = 'https://api.xero.com/api.xro/2.0/Invoices'
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Xero-tenant-id': tenant_id,
+        'Accept': 'application/json'
+    }
+    params = {
+        'where': f'Date >= DateTime({start_date}) && Date <= DateTime({end_date})',
+        'page': page
+    }
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+    return response.json().get('Invoices', [])
 
 # ------------------------------------------
 # Save tokens
@@ -108,6 +132,99 @@ def get_payments(access_token, tenant_id, start_date):
     else:
         print("Failed to get payments:", response.text)
         return []
+    
+import requests
+
+def get_creditnotes(access_token, tenant_id, start_date, end_date, contact=None):
+    # Build filter string
+    param_str = (
+        f'Date >= DateTime({start_date.replace("-", ", ")}) '
+        f'&& Date <= DateTime({end_date.replace("-", ", ")}) '
+        f'&& Status != "DELETED" && Status != "VOIDED"'
+    )
+
+    if contact:
+        param_str += f' && Contact.Name == "{contact}"'
+
+    params = {
+        'where': param_str,
+    }
+
+    response = requests.get(
+        "https://api.xero.com/api.xro/2.0/CreditNotes",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/json",
+            "Xero-tenant-id": tenant_id,
+        },
+        params=params
+    )
+
+    if response.status_code == 200:
+        return response.json().get("CreditNotes", [])
+    else:
+        print("Failed to get credit notes:", response.status_code, response.text)
+        return []
+    
+## Will definitely need to be gone over, do not trust yet
+def pull_tenant_invoices(start_date=None, end_date=None, itype=None, contact=None):
+    """
+    Pulls tenant invoices from Xero API for a given person.
+    Optionally filters by date range, invoice type, and contact name.
+    """
+    access_token = authorize_xero(org_name="Parklane Properties")
+    tokens = load_tokens()
+    if not tokens:
+        print("No tokens saved. Run the Flask server to authorize first.")
+        return []
+
+    access_token = tokens["access_token"]
+    tenant_id = get_tenant_id(access_token)
+    
+    if not tenant_id:
+        print("Failed to get tenant ID.")
+        return []
+
+    # Default date range to last 30 days if not provided
+    if not start_date:
+        start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+    if not end_date:
+        end_date = datetime.now().strftime('%Y-%m-%d')
+
+    invoices = get_invoices(access_token, tenant_id, start_date, end_date, itype, contact=contact)
+    
+    return invoices
+
+def apply_payment(access_token, tenant_id, invoice_id, amount, date, code):
+    """
+    Applies a payment to a given invoice via Xero API.
+    """
+    url = f'https://api.xero.com/api.xro/2.0/Payments'
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Xero-tenant-id': tenant_id,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+
+    data = {
+        "Payments": [
+            {
+                "Invoice": {
+                    "InvoiceID": invoice_id
+                },
+                "Account": {
+                    "Code": code  # replace with your bank or payment account code in Xero
+                },
+                "Date": date,
+                "Amount": amount
+            }
+        ]
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    response.raise_for_status()
+    return response.json()
 
 def authorize_xero(org_name="Test"):
     tokens = load_tokens()

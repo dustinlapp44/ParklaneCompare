@@ -3,7 +3,7 @@ import math
 import pandas as pd
 import numpy as np
 from typing import List, Dict, Tuple, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from difflib import SequenceMatcher
 from dateutil import parser
 from xero_client import authorize_xero, get_invoices
@@ -12,9 +12,11 @@ work_dir_template = f'Invoice Reconciliation/%s/'
 invoice_file_template = f'%s - PMC Data.csv'
 payment_file_template = f'%s - Property Data.csv'
 output_file_template = f'%s - PMC vs Property.csv'
+combination_file_template = f'%s - Combination Matches.csv'
 invoice_path_template = f'{work_dir_template}{invoice_file_template}'
 payment_path_template = f'{work_dir_template}{payment_file_template}'
 output_path_template = f'{work_dir_template}{output_file_template}'
+combination_path_template = f'{work_dir_template}{combination_file_template}'
 
 headers = {
                 'ACCREC':['Type','InvoiceNumber','DateString','DueDateString','Reference','Total','AmountDue','Status','InvoiceSent'],
@@ -69,6 +71,13 @@ class Record:
     raw_data: Dict
     invoice: Optional[str] = None
     job: Optional[str] = None
+    
+    def to_dict(self) -> Dict:
+        return asdict(self)
+
+    def to_csv(self) -> str:
+        """Returns a CSV representation of this record."""
+        return f"{self.date},{self.description},{self.amount}" 
 
 @dataclass
 class MatchResult:
@@ -79,6 +88,12 @@ class MatchResult:
     text_score: float
     number_score: float
     confidence: str
+
+    def to_csv(self) -> str:
+        """Returns a CSV representation of this match result."""
+        return f"{self.record1.date},{self.record1.description},{self.record1.amount}," \
+               f"{self.record2.date},{self.record2.description},{self.record2.amount}," 
+               #f"{self.similarity_score:.3f},{self.text_score:.3f},{self.number_score:.3f},{self.confidence}"
 
 # ================================
 # Fuzzy Matcher Class

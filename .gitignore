@@ -4,4 +4,4 @@
 test*
 *.log
 *.json
-
+*.db
