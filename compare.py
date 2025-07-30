@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass, asdict
 from difflib import SequenceMatcher
 from dateutil import parser
-from xero_client import authorize_xero, get_invoices
+from xero_client import authorize_xero, get_invoices, get_creditnotes
 
 work_dir_template = f'Invoice Reconciliation/%s/'
 invoice_file_template = f'%s - PMC Data.csv'
@@ -20,7 +20,9 @@ combination_path_template = f'{work_dir_template}{combination_file_template}'
 
 headers = {
                 'ACCREC':['Type','InvoiceNumber','DateString','DueDateString','Reference','Total','AmountDue','Status','InvoiceSent'],
-                'ACCPAY':['Type','DateString', 'Contact', 'InvoiceNumber', 'DueDateString', 'Total', 'AmountDue', 'Status']
+                'ACCPAY':['Type','DateString', 'Contact', 'InvoiceNumber', 'DueDateString', 'Total', 'AmountDue', 'Status'],
+                'ACCPAYCREDIT':['Type','DateString', 'Contact', 'CreditNoteNumber', 'Total', 'RemainingCredit', 'Status'],
+                'ACCRECCREDIT':['Type','DateString', 'Contact', 'CreditNoteNumber', 'Total', 'RemainingCredit', 'Status']
                 }
     
 property_aliases = {
@@ -135,11 +137,13 @@ class FuzzyMatcher:
 
     def amount_similarity(self, amount1: float, amount2: float) -> float:
         """Calculate similarity between two amounts"""
-        if amount1 == 0 and amount2 == 0:
+        abs1 = abs(amount1)
+        abs2 = abs(amount2)
+        if abs1 == 0 and abs2 == 0:
             return 1.0
-        if amount1 == 0 or amount2 == 0:
+        if abs1 == 0 or abs2 == 0:
             return 0.0
-        return min(amount1, amount2) / max(amount1, amount2)
+        return min(abs1, abs2) / max(abs1, abs2)
 
     def calculate_similarity(self, r1: Record, r2: Record) -> Tuple[float, float, float, float]:
         text_score = self.text_similarity(r1.description, r2.description)
@@ -200,7 +204,10 @@ class FuzzyMatcher:
 
         # Build list of all possible matches above threshold
         for inv in table1:
+            
             for pay in table2:
+                if inv.raw_data.get('Gross') < 0 and pay.raw_data.get('Amount') < 0:
+                    pass
                 score, text_score, number_score, amount_score = self.calculate_similarity(inv, pay)
 
                 if score >= self.similarity_threshold:
@@ -316,6 +323,33 @@ def pull_pmc_data(start_date="2025-07-01", end_date="2025-07-02", headers=None, 
 
     return ret_invoices
 
+def pull_pmc_credit(start_date="2025-07-01", end_date="2025-07-02", headers=None, itype=None, contact=None):
+    # Implement PMC data pulling logic here
+    access_token, tenant_id = authorize_xero(org_name="PMC")
+    credit_notes = get_creditnotes(access_token, tenant_id, start_date, end_date, itype=itype, contact=contact)
+    if not credit_notes:
+        print("No credit notes found.")
+    else:
+        print(f"Found {len(credit_notes)} credit notes.")
+
+    ret_invoices = []
+    if headers is not None:
+        for invoice in credit_notes:
+            if invoice['Type'] not in headers.keys():
+                print(f"Skipping invoice with unsupported type: {invoice['Type']}")
+                continue
+            ret_invoice = {}
+            for col in headers[invoice['Type']]:
+                if col in invoice:
+                    ret_invoice[col] = invoice[col]
+                else:
+                    ret_invoice[col] = None
+            ret_invoices.append(ret_invoice)
+    else:
+        for invoice in credit_notes:
+            ret_invoices.append(invoice)
+    return ret_invoices
+
 def pull_property_data(start_date="2025-07-01", end_date="2025-07-02", headers=None, itype=None):
 
     # Implement PMC data pulling logic here
@@ -342,7 +376,34 @@ def pull_property_data(start_date="2025-07-01", end_date="2025-07-02", headers=N
     else:
         for invoice in invoices:
             ret_invoices.append(invoice)
+            
+    return ret_invoices
 
+def pull_property_credit(start_date="2025-07-01", end_date="2025-07-02", headers=None, itype=None):
+    # Implement PMC data pulling logic here
+    access_token, tenant_id = authorize_xero(org_name="Parklane Properties")
+    credit_notes = get_creditnotes(access_token, tenant_id, start_date, end_date, itype=itype, contact="Parklane Management Company")
+    if not credit_notes:
+        print("No credit notes found.")
+    else:
+        print(f"Found {len(credit_notes)} credit notes.")
+
+    ret_invoices = []
+    if headers is not None:
+        for invoice in credit_notes:
+            if invoice['Type'] not in headers.keys():
+                print(f"Skipping invoice with unsupported type: {invoice['Type']}")
+                continue
+            ret_invoice = {}
+            for col in headers[invoice['Type']]:
+                if col in invoice:
+                    ret_invoice[col] = invoice[col]
+                else:
+                    ret_invoice[col] = None
+            ret_invoices.append(ret_invoice)
+    else:
+        for invoice in credit_notes:
+            ret_invoices.append(invoice)
     return ret_invoices
 
 def get_examples():
@@ -470,7 +531,7 @@ def property_data_cleanup(in_dict: list[dict]):
                 if value is not None:
                     new_dict['Reference'] = value
                 else:
-                    new_dict['InvoiceNumber'] = None
+                    new_dict['Reference'] = None
             elif key == 'Type':
                 if value == 'ACCREC':
                     source_str = 'Recievable Invoice'
@@ -483,6 +544,95 @@ def property_data_cleanup(in_dict: list[dict]):
                 new_dict['Amount'] = value
             elif key == 'AmountDue':
                 new_dict['Balance'] = value
+            
+            else:
+                new_dict[key] = value
+            
+        ret_list.append(new_dict)
+    return ret_list
+
+def property_credit_cleanup(in_dict: list[dict]):
+    ret_list = []
+    source_str=''
+    source_flag = False
+    for item in in_dict:
+        new_dict = {}
+        for key, value in item.items():   
+            if source_flag:
+                new_dict['Source'] = source_str
+                source_flag = False
+
+            if key == 'DateString':
+                if value is not None:
+                    new_dict['Date'] = parser.parse(value).strftime('%d %b %Y')
+                else:
+                    new_dict['Date'] = None
+            elif key == 'Contact':
+                if 'Name' in value:
+                    new_dict['Contact'] = value['Name']
+                else:
+                    new_dict['Contact'] = None
+                source_flag = True
+            elif key == 'CreditNoteNumber':
+                if value is not None:
+                    new_dict['Reference'] = value
+                else:
+                    new_dict['Reference'] = None
+            elif key == 'Type':
+                if value == 'ACCRECCREDIT':
+                    source_str = 'Recievable Credit Note'
+                elif value == 'ACCPAYCREDIT':
+                    source_str = 'Payable Credit Note'
+                continue
+            
+            ## Will need to adjust these
+            elif key == 'Total':
+                new_dict['Amount'] = value*-1  # Credit notes are negative amounts
+            elif key == 'RemainingCredit':
+                new_dict['Balance'] = value*-1
+            
+            else:
+                new_dict[key] = value
+            
+        ret_list.append(new_dict)
+    return ret_list
+
+def pmc_credit_cleanup(in_dict: list[dict]):
+    ret_list = []
+    source_str=''
+    source_flag = False
+    for item in in_dict:
+        new_dict = {}
+        for key, value in item.items():   
+            if source_flag:
+                new_dict['Source'] = source_str
+                source_flag = False
+
+            if key == 'DateString':
+                if value is not None:
+                    new_dict['Date'] = parser.parse(value).strftime('%d %b %Y')
+                else:
+                    new_dict['Date'] = None
+            elif key == 'Contact':
+                source_flag = True
+            elif key == 'CreditNoteNumber':
+                if value is not None:
+                    new_dict['Reference'] = value
+                    new_dict['Combined'] = value
+                else:
+                    new_dict['Reference'] = None
+            elif key == 'Type':
+                if value == 'ACCRECCREDIT':
+                    source_str = 'Recievable Credit Note'
+                elif value == 'ACCPAYCREDIT':
+                    source_str = 'Payable Credit Note'
+                continue
+            
+            ## Will need to adjust these
+            elif key == 'Total':
+                new_dict['Gross'] = value*-1  # Credit notes are negative amounts
+            elif key == 'RemainingCredit':
+                new_dict['Balance'] = value*-1
             
             else:
                 new_dict[key] = value
@@ -519,6 +669,9 @@ def pull_all_data(start_date="2025-07-01", end_date="2025-07-02", headers=header
         if pull_new_data:
             payments = pull_property_data(start_date=start_date, end_date=end_date, headers=headers, itype='ACCPAY')
             payments = property_data_cleanup(payments)
+            credit_notes = pull_property_credit(start_date=start_date, end_date=end_date, headers=headers, itype='ACCPAYCREDIT')
+            credit_notes = property_credit_cleanup(credit_notes)
+            payments = payments + credit_notes
             create_file(payments, 'All Property Data.csv')
             unmatched_df = pd.read_csv('All Property Data.csv')
 
@@ -527,10 +680,15 @@ def pull_all_data(start_date="2025-07-01", end_date="2025-07-02", headers=header
             sum_length = 0
             for property_name, aliases in property_aliases.items():
                 print(f"Processing property: {property_name}")
-
+                #if property_name == 'Alaska Center':
+                #    pass
+                #else:
+                #    continue
                 invoices = pull_pmc_data(start_date=start_date, end_date=end_date, headers=headers, itype='ACCREC', contact=property_name)
                 invoices = pmc_data_cleanup(invoices)
-
+                pmc_credit_notes = pull_pmc_credit(start_date=start_date, end_date=end_date, headers=headers, itype='ACCRECCREDIT', contact=property_name)
+                pmc_credit_notes = pmc_credit_cleanup(pmc_credit_notes)
+                invoices = invoices + pmc_credit_notes
                 create_dir_file(invoices, invoice_file_template%property_name, work_dir_template % property_name)
 
                 # Build regex pattern to match any alias (case-insensitive)

@@ -135,14 +135,15 @@ def get_payments(access_token, tenant_id, start_date):
     
 import requests
 
-def get_creditnotes(access_token, tenant_id, start_date, end_date, contact=None):
+def get_creditnotes(access_token, tenant_id, start_date, end_date, itype, contact=None):
     # Build filter string
     param_str = (
         f'Date >= DateTime({start_date.replace("-", ", ")}) '
         f'&& Date <= DateTime({end_date.replace("-", ", ")}) '
         f'&& Status != "DELETED" && Status != "VOIDED"'
     )
-
+    if itype!=None:
+        param_str += f' && Type == "{itype}"'
     if contact:
         param_str += f' && Contact.Name == "{contact}"'
 

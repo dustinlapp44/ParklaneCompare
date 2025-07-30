@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Invoice Matcher</title>
+</head>
+<body>
+    <h1>Invoice Matcher</h1>
+    <form method="post">
+        <button type="submit">Run Match Program</button>
+    </form>
+
+    {% if output %}
+    <h2>Output:</h2>
+    <pre style="background:#eee;padding:10px;">{{ output }}</pre>
+    {% endif %}
+</body>
+</html>
