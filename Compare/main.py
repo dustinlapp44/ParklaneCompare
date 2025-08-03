@@ -1,8 +1,12 @@
-from google_drive_client import GoogleDriveClient
-import compare as compare
-from combine import find_combination_matches, consolidate_combination_matches, write_reconciliation_csv, find_combination_entries
-from excel_output import write_reconciliation_report
-from xero_client import authorize_xero
+import os, sys
+# Add the root directory to sys.path
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
+
+from Google.GoogleDriveClient.google_drive_client import GoogleDriveClient
+import Compare.compare as compare
+from Compare.combine import find_combination_entries
 
 def run_full_pipeline():
     start_date = "2024-01-01"

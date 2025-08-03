@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-from compare import Record
+from Compare.compare import Record
 
 @dataclass
 class CombinationEntry:

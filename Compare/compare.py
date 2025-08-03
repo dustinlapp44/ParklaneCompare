@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass, asdict
 from difflib import SequenceMatcher
 from dateutil import parser
-from xero_client import authorize_xero, get_invoices, get_creditnotes
+from XeroClient.xero_client import authorize_xero, get_invoices, get_creditnotes
 
 work_dir_template = f'Invoice Reconciliation/%s/'
 invoice_file_template = f'%s - PMC Data.csv'

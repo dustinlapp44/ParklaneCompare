@@ -3,22 +3,26 @@ from pydrive2.drive import GoogleDrive
 import os
 
 class GoogleDriveClient:
-    def __init__(self, credentials_path='client_secrets.json'):
+    def __init__(self, credentials_file='client_secrets.json'):
         """
         Initializes the Google Drive client with OAuth2 authentication.
         """
-        if not os.path.exists(credentials_path):
-            raise FileNotFoundError(f"Credentials file not found: {credentials_path}")
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.credentials_path = os.path.join(base_dir, credentials_file)
+
+        if not os.path.exists(self.credentials_path):
+            raise FileNotFoundError(f"Credentials file not found: {self.credentials_path}")
         
         self.gauth = GoogleAuth()
-        self.gauth.LoadClientConfigFile(credentials_path)
+        self.gauth.LoadClientConfigFile(self.credentials_path)
 
         # Ensure offline access for refresh token
         self.gauth.GetFlow()
         self.gauth.flow.params.update({'access_type': 'offline'})
 
         # Load existing token if available
-        self.gauth.LoadCredentialsFile("token.json")
+        self.token_path = os.path.join(base_dir, 'token.json')
+        self.gauth.LoadCredentialsFile(self.token_path)
         if self.gauth.credentials is None:
             self.gauth.LocalWebserverAuth()
         elif self.gauth.access_token_expired:
@@ -26,7 +30,7 @@ class GoogleDriveClient:
         else:
             self.gauth.Authorize()
 
-        self.gauth.SaveCredentialsFile("token.json")
+        self.gauth.SaveCredentialsFile(self.token_path)
         self.drive = GoogleDrive(self.gauth)
 
     def upload_file(self, local_path, remote_name=None, parent_folder_id=None, overwrite=True):
@@ -150,3 +154,11 @@ class GoogleDriveClient:
                 folder.Upload()
             parent_id = folder['id']
         return parent_id
+    
+if __name__ == "__main__":
+    # Example usage
+    client = GoogleDriveClient()
+    client.upload_file('example.txt', remote_name='UploadedExample.txt')
+    print(client.list_files_with_paths("title contains 'UploadedExample'"))
+    client.download_file('your_file_id_here', 'downloaded_example.txt')
+    print("Done.")

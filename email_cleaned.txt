@@ -1,0 +1,1696 @@
+
+
+
+
+
+
+
+
+APTEXX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+Aug 1 2025 Payment Summary
+
+
+
+
+
+
+Ref #
+Date
+Method
+Person
+Unit
+Amount
+
+
+
+Barcelona - Rent (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Barcelona - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Barcelona - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Alaska Center - Rent (Non-Integrated)
+
+
+
+133097783
+1 Aug 2025 14:08:56 MDT
+ ACH #0994
+Sonja Styblo
+Alaska Center 100G
+$230.00
+
+
+133001361
+1 Aug 2025 07:00:50 MDT
+ ACH #4425
+Grace Lovera
+Alaska Center 100A
+$400.00
+
+
+Memo:
+August Rent
+
+
+132935443
+1 Aug 2025 05:16:31 MDT
+ ACH #3879
+Brian Brooks dba Idaho Wildlife Federation 2
+450
+$1,500.00
+
+
+132935386
+1 Aug 2025 05:16:27 MDT
+AMEX CREDIT #1002
+Nathan Zanders
+310
+$1,500.00
+
+
+132935349
+1 Aug 2025 05:16:24 MDT
+ ACH #1517
+Samantha Maxey
+Alaska Center 100H
+$230.00
+
+
+132935348
+1 Aug 2025 05:16:24 MDT
+ ACH #3517
+Leslie  Fuger
+1020 W. Main Street #314
+$325.00
+
+
+132935040
+1 Aug 2025 05:15:48 MDT
+ ACH #0075
+Tom Scott  Agency
+1020 W. Main Street, Suite 460
+$520.00
+
+
+132934990
+1 Aug 2025 05:15:44 MDT
+ ACH #7705
+Casey Parsons
+Alaska 440
+$887.00
+
+
+132934985
+1 Aug 2025 05:15:44 MDT
+ ACH #8323
+Jeremy Zerr
+305
+$1,265.00
+
+
+132934954
+1 Aug 2025 05:15:42 MDT
+ ACH #5936
+Matt Hallowell
+Alaska Center 100I
+$250.00
+
+
+Subtotal
+$7,107.00
+
+
+
+Alaska Center - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Alaska Center - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Camels Back - Rent (Non-Integrated)
+
+
+
+133163407
+1 Aug 2025 23:43:45 MDT
+ ACH #8631
+Lance Binder
+1410-228
+$1,000.00
+
+
+Memo:
+Remainder paid as soon as possible.
+
+
+133162760
+1 Aug 2025 23:19:05 MDT
+VISA DEBIT #3193
+Dalia Dempster
+1450-115
+$1,500.00
+
+
+133138121
+1 Aug 2025 17:37:33 MDT
+VISA DEBIT #8375
+Mohammad Naeemi
+100
+$501.00
+
+
+133092468
+1 Aug 2025 13:45:50 MDT
+ ACH #4403
+Olivia  Bierman
+1410-129
+$1,585.00
+
+
+133068498
+1 Aug 2025 11:53:59 MDT
+ ACH #4492
+Heather Pascua
+1426-200
+$1,805.00
+
+
+133054661
+1 Aug 2025 10:51:33 MDT
+ ACH #4614
+John Rockefeller 2
+1410-227
+$1,815.00
+
+
+133042901
+1 Aug 2025 09:59:37 MDT
+VISA CREDIT #9235
+Lauren  Perez
+1414-125
+$1,215.66
+
+
+132947959
+1 Aug 2025 05:40:59 MDT
+ ACH #2090
+Michael   Moore
+113
+$1,365.00
+
+
+Memo:
+Aug 25 rent
+
+
+132935415
+1 Aug 2025 05:16:29 MDT
+ ACH #7402
+Edward Daley
+1422-216
+$1,580.00
+
+
+132935394
+1 Aug 2025 05:16:28 MDT
+ ACH #2338
+Richard  Travis
+1426-101
+$1,725.00
+
+
+132935371
+1 Aug 2025 05:16:26 MDT
+VISA DEBIT #7632
+Kendra Nagy
+1450-213
+$1,555.00
+
+
+132935358
+1 Aug 2025 05:16:25 MDT
+ ACH #0951
+Brett Hansen 2
+1444-111
+$1,445.00
+
+
+132934971
+1 Aug 2025 05:15:43 MDT
+ ACH #7425
+Seagen  Safaii
+1444-209
+$1,520.00
+
+
+132934895
+1 Aug 2025 05:15:38 MDT
+ ACH #4352
+Norma  Klepacki
+1444-108
+$1,435.00
+
+
+Subtotal
+$20,046.66
+
+
+
+Camels Back - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Camels Back - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Magnolia - Rent (Non-Integrated)
+
+
+
+133073684
+1 Aug 2025 12:20:13 MDT
+MASTERCARD DEBIT #0390
+John Chambers
+M3444
+$268.42
+
+
+133066634
+1 Aug 2025 11:46:19 MDT
+ ACH #5897
+Katie Okennedy
+M3547
+$720.00
+
+
+133002762
+1 Aug 2025 07:02:37 MDT
+VISA DEBIT #8537
+Mason Lauer
+M3485
+$1,729.00
+
+
+132969426
+1 Aug 2025 06:10:43 MDT
+MASTERCARD DEBIT #0449
+John Chambers
+M3444
+$781.58
+
+
+132934921
+1 Aug 2025 05:15:40 MDT
+VISA DEBIT #7179
+Gasore EMMANUEL
+m3401
+$1,816.00
+
+
+132922351
+1 Aug 2025 01:59:50 MDT
+ ACH #7045
+Bradley  Wakly
+M3490
+$750.00
+
+
+Subtotal
+$6,065.00
+
+
+
+Magnolia - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Magnolia - Deposit (Non-Integrated)
+
+
+
+133084104
+1 Aug 2025 13:04:34 MDT
+VISA DEBIT #4391
+Joseph walsh
+G3422
+$150.00
+
+
+Subtotal
+$150.00
+
+
+
+Grove Street - Rent (Non-Integrated)
+
+
+
+133073675
+1 Aug 2025 12:20:10 MDT
+ ACH #8755
+Brodan  Cunningham
+315
+$1,185.00
+
+
+Subtotal
+$1,185.00
+
+
+
+Grove Street - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Grove Street - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Hillcreek - Rent (Non-Integrated)
+
+
+
+133163549
+1 Aug 2025 23:49:38 MDT
+ ACH #8845
+Elizabeth Olson
+2465-104
+$1,395.00
+
+
+133059074
+1 Aug 2025 11:10:55 MDT
+VISA DEBIT #5975
+Tina  Houlden
+2381-201
+$234.00
+
+
+133037419
+1 Aug 2025 09:33:32 MDT
+VISA DEBIT #1947
+Julie  Sullivan
+2453-101
+$226.00
+
+
+Memo:
+Rent August
+
+
+133020529
+1 Aug 2025 08:12:56 MDT
+ ACH #1099
+Brent Muir
+202
+$180.00
+
+
+Memo:
+August 2025
+
+
+132935413
+1 Aug 2025 05:16:29 MDT
+VISA DEBIT #0296
+Eric  Moeller
+2405-205
+$413.00
+
+
+132935380
+1 Aug 2025 05:16:27 MDT
+ ACH #0106
+Jennifer  page
+2453 15th Street #203
+$234.00
+
+
+132935025
+1 Aug 2025 05:15:47 MDT
+ ACH #8706
+Dawson Foster
+2405-306
+$1,455.00
+
+
+Subtotal
+$4,137.00
+
+
+
+Hillcreek - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Hillcreek - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Idanha - Rent (Non-Integrated)
+
+
+
+133089480
+1 Aug 2025 13:31:07 MDT
+ ACH #0527
+Catherine   Carmack
+200
+$780.00
+
+
+Memo:
+August rent 
+
+
+133081885
+1 Aug 2025 12:54:47 MDT
+VISA DEBIT #5109
+Tiffani Diaz
+204
+$563.00
+
+
+133054434
+1 Aug 2025 10:50:29 MDT
+ ACH #9105
+Christopher Hughes
+506
+$222.00
+
+
+Memo:
+August 2025 Rent
+
+
+133017512
+1 Aug 2025 07:57:15 MDT
+ ACH #8176
+Alexis  Yon
+503
+$45.00
+
+
+132935370
+1 Aug 2025 05:16:26 MDT
+ ACH #8176
+Alexis  Yon
+503
+$1,630.00
+
+
+132935356
+1 Aug 2025 05:16:25 MDT
+ ACH #6115
+Larry Fullmer
+308
+$995.00
+
+
+132935014
+1 Aug 2025 05:15:46 MDT
+ ACH #1049
+Dan  Staples
+928 W. Main St. #605
+$676.00
+
+
+Subtotal
+$4,911.00
+
+
+
+Idanha - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Idanha - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Franklin Street - Rent (Non-Integrated)
+
+
+
+132935001
+1 Aug 2025 05:15:45 MDT
+ ACH #3583
+Kendall Lutz
+660
+$465.00
+
+
+132934894
+1 Aug 2025 05:15:38 MDT
+ ACH #3394
+Samuel Patterson
+Franklin 692
+$1,220.00
+
+
+Subtotal
+$1,685.00
+
+
+
+Franklin Street - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Franklin Street - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Parklane Apt - Rent (Non-Integrated)
+
+
+
+133045815
+1 Aug 2025 10:12:56 MDT
+MASTERCARD DEBIT #0479
+Jeffrey  Allen
+112
+$338.00
+
+
+132922429
+1 Aug 2025 02:02:28 MDT
+ ACH #7946
+Troy Kemp
+210
+$1,360.00
+
+
+Memo:
+August Rent 8/1/25
+Troy Kemp #210
+
+
+Subtotal
+$1,698.00
+
+
+
+Parklane Apt - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Parklane Apt - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Parkhill - Rent (Non-Integrated)
+
+
+
+133110095
+1 Aug 2025 15:07:55 MDT
+VISA DEBIT #1660
+Jennifer Davis-Liddell
+B303
+$75.00
+
+
+133095541
+1 Aug 2025 14:00:09 MDT
+VISA DEBIT #7891
+Philip  Records
+B101
+$1,265.00
+
+
+132935360
+1 Aug 2025 05:16:25 MDT
+MASTERCARD DEBIT #3400
+Troy  Carico
+B106
+$288.00
+
+
+132935061
+1 Aug 2025 05:15:49 MDT
+ ACH #1039
+Argelia    Segovia-Liga
+201
+$1,295.00
+
+
+132935022
+1 Aug 2025 05:15:47 MDT
+ ACH #6097
+Phillip  Metsker
+A205
+$657.50
+
+
+Subtotal
+$3,580.50
+
+
+
+Parkhill - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Parkhill - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Parkcenter - Rent (Non-Integrated)
+
+
+
+133147597
+1 Aug 2025 19:02:14 MDT
+ ACH #7559
+Amy Sobrito
+311
+$1,635.00
+
+
+133099186
+1 Aug 2025 14:16:02 MDT
+ ACH #3219
+Kassandra  Moore
+111
+$1,525.00
+
+
+133080678
+1 Aug 2025 12:51:56 MDT
+ ACH #7814
+Joanna Dunn
+113
+$1,495.00
+
+
+Memo:
+August rent
+
+
+133058888
+1 Aug 2025 11:10:04 MDT
+MASTERCARD DEBIT #2189
+Jace oswald
+116
+$60.00
+
+
+133057708
+1 Aug 2025 11:04:42 MDT
+MASTERCARD DEBIT #1946
+Jace oswald
+116
+$440.00
+
+
+133052579
+1 Aug 2025 10:42:16 MDT
+MASTERCARD DEBIT #2189
+Austin Killian
+116
+$1,085.00
+
+
+133029018
+1 Aug 2025 08:54:12 MDT
+ ACH #5760
+Tyler Orr
+316
+$1,600.00
+
+
+Memo:
+Aug rent
+
+
+132934963
+1 Aug 2025 05:15:43 MDT
+ ACH #4611
+ Riley  Adamson
+101
+$700.00
+
+
+132934930
+1 Aug 2025 05:15:41 MDT
+ ACH #1080
+Brianna  Durham
+209
+$1,455.00
+
+
+132934907
+1 Aug 2025 05:15:39 MDT
+ ACH #8356
+Amber  Snurkowski
+115
+$1,285.00
+
+
+Subtotal
+$11,280.00
+
+
+
+Parkcenter - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Parkcenter - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+PMC Collections - Rent (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+PMC Collections - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+PMC Collections - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Premier - Rent (Non-Integrated)
+
+
+
+132935399
+1 Aug 2025 05:16:28 MDT
+ ACH #8227
+Nial  Burnham
+813 W. Hays
+$1,260.00
+
+
+Subtotal
+$1,260.00
+
+
+
+Premier - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Premier - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Quail Park - Rent (Non-Integrated)
+
+
+
+133144379
+1 Aug 2025 18:28:18 MDT
+ ACH #8140
+Chelsea Shupe
+2283
+$1,425.00
+
+
+133142059
+1 Aug 2025 18:07:59 MDT
+VISA DEBIT #9521
+Yesenia Lopez
+2265
+$1,385.00
+
+
+Memo:
+Renta
+
+
+133134289
+1 Aug 2025 17:09:52 MDT
+VISA DEBIT #3879
+Niccolaus Dockstader
+2222
+$1,425.00
+
+
+133031712
+1 Aug 2025 09:07:13 MDT
+VISA DEBIT #7238
+Brandy  Anderson
+2284
+$797.00
+
+
+133031665
+1 Aug 2025 09:07:00 MDT
+ ACH #7803
+Ahmad Zaki Rastgar
+2264
+$1,416.00
+
+
+Memo:
+Payment of Invoice #: INV-224327
+
+
+133015533
+1 Aug 2025 07:45:09 MDT
+ ACH #0177
+Makayla 
+2314
+$1,390.00
+
+
+133004953
+1 Aug 2025 07:05:45 MDT
+VISA DEBIT #8158
+Linda Dilsaver & Matthew Dilsaver & Amber Dilsaver
+2282
+$1,400.00
+
+
+132985633
+1 Aug 2025 06:39:29 MDT
+ ACH #3087
+Jesse Brooks
+2226
+$1,395.00
+
+
+132935038
+1 Aug 2025 05:15:48 MDT
+ ACH #2574
+Brandon  Lheureux
+2374
+$712.50
+
+
+132934929
+1 Aug 2025 05:15:41 MDT
+ ACH #2193
+Kelly and Julie Evans
+9150
+$1,410.00
+
+
+132929521
+1 Aug 2025 05:01:40 MDT
+MASTERCARD DEBIT #5512
+Heidi  Schooley
+2266
+$207.00
+
+
+Memo:
+Rent for August 2025
+
+
+Subtotal
+$12,962.50
+
+
+
+Quail Park - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Quail Park - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+State Street - Rent (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+State Street - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+State Street - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Tamarack House - Rent (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Tamarack House - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Tamarack House - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Union Block - Rent (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Union Block - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Union Block - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Villa Montagna - Rent (Non-Integrated)
+
+
+
+133120132
+1 Aug 2025 15:57:40 MDT
+ ACH #2440
+Taysia  Joelson
+1196
+$1,595.00
+
+
+133099097
+1 Aug 2025 14:15:37 MDT
+VISA DEBIT #0713
+Chloe  Drake
+1206
+$824.00
+
+
+Memo:
+August 1st 2025 rent -1206 E Shenandoah Dr Boise ID 83712
+
+
+133079019
+1 Aug 2025 12:45:42 MDT
+ ACH #9123
+Courtney  McGuane
+1192
+$70.00
+
+
+Memo:
+Additional fee?
+
+
+Subtotal
+$2,489.00
+
+
+
+Villa Montagna - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Villa Montagna - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Idaho Building - Rent (Non-Integrated)
+
+
+
+133109259
+1 Aug 2025 15:03:36 MDT
+VISA DEBIT #4604
+Sarah Spoja & Brenton Crowl
+305
+$1,554.00
+
+
+Memo:
+August rent
+
+
+133088408
+1 Aug 2025 13:26:02 MDT
+ ACH #4619
+Ramie Sodaro
+505
+$1,617.00
+
+
+Memo:
+Aug
+
+
+133066426
+1 Aug 2025 11:45:13 MDT
+ ACH #5118
+Gold Bowl LLC Cupbop
+289
+$5,105.00
+
+
+133055847
+1 Aug 2025 10:56:27 MDT
+VISA CREDIT #9108
+Petra Fox
+407
+$102.00
+
+
+133047169
+1 Aug 2025 10:18:38 MDT
+AMEX CREDIT #2009
+Robert A Doty
+413
+$2,247.00
+
+
+132974706
+1 Aug 2025 06:18:52 MDT
+ ACH #4531
+Virginia Mercedes  Starr
+304
+$790.00
+
+
+Memo:
+Half August 
+
+
+132935429
+1 Aug 2025 05:16:31 MDT
+ ACH #2966
+Emiliano Espasandin
+209
+$545.00
+
+
+132935034
+1 Aug 2025 05:15:48 MDT
+ ACH #6595
+Jason Conely 
+Idaho 217
+$400.00
+
+
+132935030
+1 Aug 2025 05:15:47 MDT
+ ACH #0442
+Erin Reeve
+Idaho Building 205A
+$400.00
+
+
+132934983
+1 Aug 2025 05:15:44 MDT
+ ACH #6292
+Casey Petti
+607
+$1,597.00
+
+
+132934973
+1 Aug 2025 05:15:43 MDT
+ ACH #4371
+Skye Dzhidzhiyeshvili 
+Idaho Building 219 
+$600.00
+
+
+132934941
+1 Aug 2025 05:15:41 MDT
+ ACH #9685
+Brandi Downey
+206
+$1,825.00
+
+
+132934896
+1 Aug 2025 05:15:38 MDT
+ ACH #6640
+Todd   Shallat
+280 N. 8TH St Apt 509
+$1,458.00
+
+
+Subtotal
+$18,240.00
+
+
+
+Idaho Building - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Idaho Building - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Warm Springs Apt - Rent (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Warm Springs Apt - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Warm Springs Apt - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Offices at Warm Springs - Rent (Non-Integrated)
+
+
+
+133019971
+1 Aug 2025 08:09:51 MDT
+ ACH #1458
+JENI REBECA  RIVERO KINSEY
+750G
+$475.00
+
+
+Memo:
+August Rent 
+
+
+132935383
+1 Aug 2025 05:16:27 MDT
+ ACH #6684
+Lecia Synder
+750E
+$300.00
+
+
+132935350
+1 Aug 2025 05:16:24 MDT
+ ACH #0822
+Tricia Daigle
+760-A1/E/K/L
+$2,040.00
+
+
+132935015
+1 Aug 2025 05:15:46 MDT
+ ACH #4734
+Brandon Trean
+760A
+$650.00
+
+
+132934997
+1 Aug 2025 05:15:45 MDT
+ ACH #4722
+Ashley Betz
+Warm Springs Offices 750F
+$450.00
+
+
+132934960
+1 Aug 2025 05:15:42 MDT
+AMEX CREDIT #1006
+Nicole Garvin
+750A/750B1/750B2
+$2,200.00
+
+
+132934942
+1 Aug 2025 05:15:42 MDT
+ ACH #0368
+Matthew Nelson
+750D
+$985.00
+
+
+Subtotal
+$7,100.00
+
+
+
+Offices at Warm Springs - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Offices at Warm Springs - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Washington - Rent (Non-Integrated)
+
+
+
+133140307
+1 Aug 2025 17:53:19 MDT
+MASTERCARD DEBIT #5851
+Nicholas Morris
+1
+$1,246.00
+
+
+133068000
+1 Aug 2025 11:51:50 MDT
+ ACH #0847
+Bristol Cantwell
+10
+$1,246.00
+
+
+Memo:
+August Rent! 
+
+
+132923799
+1 Aug 2025 02:56:31 MDT
+MASTERCARD DEBIT #0891
+Daniel  Tanner
+1119C
+$230.00
+
+
+Subtotal
+$2,722.00
+
+
+
+Washington - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Washington - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Pershing Apts - Rent (Non-Integrated)
+
+
+
+133105042
+1 Aug 2025 14:42:13 MDT
+VISA DEBIT #8200
+Wendy Stewart
+3880 W Pershing Dr
+$1,275.00
+
+
+Subtotal
+$1,275.00
+
+
+
+Pershing Apts - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Pershing Apts - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Franklin Plaza - Rent (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Franklin Plaza - Application (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+
+Franklin Plaza - Deposit (Non-Integrated)
+
+
+
+Subtotal
+$0.00
+
+
+Total
+$107,893.66
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+Go to this report
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+You are subscribed to receive this email. 
+
+Click here to adjust your subscriptions.
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+

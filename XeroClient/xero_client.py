@@ -1,18 +1,34 @@
-import requests
-import json
-import os
-from datetime import datetime, timedelta
+import requests, json, os, re
+from datetime import datetime, timedelta, timezone
 
-CLIENT_ID = '6D3387F5F6F0463DA9BEB98BEDFBD793'
-CLIENT_SECRET = 'MQCjTrRNWs0Pn5D1OUR1GUDts6v9H4F5O4tGJmdPpgo4I4tx'
-TOKEN_FILE = 'xero_tokens.json'
+base_dir = os.path.dirname(os.path.abspath(__file__))
+token_path = os.path.join(base_dir, 'xero_tokens.json')
+
+## If xero_secrets is deleted, must recreate with new client_id and client_secret
+def load_xero_credentials(filename='xero_secrets.json') -> dict:
+    """
+    Load Xero API credentials from a local JSON file.
+    """
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(base_dir, filename)
+
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Xero secrets file not found: {path}")
+
+    with open(path, 'r') as f:
+        creds = json.load(f)
+
+    if 'client_id' not in creds or 'client_secret' not in creds:
+        raise ValueError("Missing 'client_id' or 'client_secret' in secrets file.")
+
+    return creds
 
 # ------------------------------------------
 # Load saved tokens if available
 # ------------------------------------------
 def load_tokens():
     try:
-        with open("xero_tokens.json", "r") as f:
+        with open(token_path, "r") as f:
             content = f.read()
             if not content.strip():
                 print("Token file is empty.")
@@ -44,7 +60,7 @@ def get_invoices_for_db(access_token, tenant_id, start_date, end_date, page=1):
 # Save tokens
 # ------------------------------------------
 def save_tokens(tokens):
-    with open(TOKEN_FILE, 'w') as f:
+    with open(token_path, 'w') as f:
         json.dump(tokens, f)
 
 # ------------------------------------------
@@ -57,7 +73,10 @@ def refresh_access_token(tokens):
         "grant_type": "refresh_token",
         "refresh_token": refresh_token,
     }
-    auth = (CLIENT_ID, CLIENT_SECRET)
+    creds = load_xero_credentials()
+    client_id = creds['client_id']
+    client_secret = creds['client_secret']
+    auth = (client_id, client_secret)
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
     response = requests.post(token_url, data=data, auth=auth, headers=headers)
@@ -194,6 +213,39 @@ def pull_tenant_invoices(start_date=None, end_date=None, itype=None, contact=Non
 
     invoices = get_invoices(access_token, tenant_id, start_date, end_date, itype, contact=contact)
     
+    invoices = format_dates(invoices)
+
+    return invoices
+
+def parse_xero_date(date_str):
+    ## Step 1, check if timestamp format
+    match = re.search(r'/Date\((\d+)(?:[+-]\d{4})?\)/', date_str)
+    if match:
+        timestamp = int(match.group(1))
+        date_str =  datetime.utcfromtimestamp(timestamp / 1000).strftime('%Y-%m-%dT%H:%M:%S')
+    ## Step 2, check if ISO format and return only date info (not time)
+    if 'T' in date_str:
+        return date_str.split('T')[0]  # Return only the date part
+    else:
+        return date_str
+
+def format_dates(invoices):
+    """
+    Converts date strings in invoices to ISO format.
+    """
+    for invoice in invoices:
+        if 'DateString' in invoice:
+            invoice['DateString'] = parse_xero_date(invoice['DateString'])
+        if 'DueDateString' in invoice:
+            invoice['DueDateString'] = parse_xero_date(invoice['DueDateString'])
+        if 'Date' in invoice:
+            invoice['Date'] = parse_xero_date(invoice['Date'])
+        if 'Payments' in invoice:
+            for payment in invoice['Payments']:
+                if 'Date' in payment:
+                    payment['Date'] = parse_xero_date(payment['Date'])
+                if 'UpdatedDateUTC' in payment:
+                    payment['UpdatedDateUTC'] = parse_xero_date(payment['UpdatedDateUTC'])
     return invoices
 
 def apply_payment(access_token, tenant_id, invoice_id, amount, date, code):

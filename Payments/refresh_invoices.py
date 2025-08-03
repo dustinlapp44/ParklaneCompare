@@ -4,8 +4,8 @@ PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PARENT_DIR not in sys.path:
     sys.path.insert(0, PARENT_DIR)
 
-from xero_client import pull_tenant_invoices
-from invoice_db import init_db, upsert_invoices
+from XeroClient.xero_client import pull_tenant_invoices
+from Payments.payments_db import init_db, upsert_invoices
 
 
 
@@ -31,7 +31,7 @@ def refresh_invoice_cache(start_date, end_date):
 if __name__ == "__main__":
     
     # Define the date range for fetching invoices
-    start_date = "2025-01-01"
+    start_date = "2025-06-01"
     end_date = "2025-07-23"
 
     refresh_invoice_cache(start_date, end_date)
