@@ -8,7 +8,7 @@ app = Flask(__name__)
 CLIENT_ID = '6D3387F5F6F0463DA9BEB98BEDFBD793'
 CLIENT_SECRET = 'MQCjTrRNWs0Pn5D1OUR1GUDts6v9H4F5O4tGJmdPpgo4I4tx'
 REDIRECT_URI = 'http://localhost:10000/callback'
-SCOPES = "offline_access accounting.transactions.read"
+SCOPES = "offline_access accounting.transactions accounting.settings.read"
 
 @app.route("/")
 def home():

@@ -5,3 +5,4 @@ test*
 *.log
 *.json
 *.db
+code_summary*.txt

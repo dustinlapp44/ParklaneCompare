@@ -192,18 +192,7 @@ def pull_tenant_invoices(start_date=None, end_date=None, itype=None, contact=Non
     Pulls tenant invoices from Xero API for a given person.
     Optionally filters by date range, invoice type, and contact name.
     """
-    access_token = authorize_xero(org_name="Parklane Properties")
-    tokens = load_tokens()
-    if not tokens:
-        print("No tokens saved. Run the Flask server to authorize first.")
-        return []
-
-    access_token = tokens["access_token"]
-    tenant_id = get_tenant_id(access_token)
-    
-    if not tenant_id:
-        print("Failed to get tenant ID.")
-        return []
+    access_token, tenant_id = authorize_xero(org_name="Parklane Properties")
 
     # Default date range to last 30 days if not provided
     if not start_date:
@@ -248,10 +237,91 @@ def format_dates(invoices):
                     payment['UpdatedDateUTC'] = parse_xero_date(payment['UpdatedDateUTC'])
     return invoices
 
-def apply_payment(access_token, tenant_id, invoice_id, amount, date, code):
+def get_xero_accounts(access_token: str, tenant_id: str):
+
+    params = {
+        'where': 'Status=="ACTIVE"',
+    }
+    
+    url = "https://api.xero.com/api.xro/2.0/Accounts"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Xero-tenant-id": tenant_id,
+        "Accept": "application/json"
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+
+    return response.json()["Accounts"]
+
+def get_bank_info(access_token, tenant_id, payment_data):
+    ret_list = []
+    accounts = get_xero_accounts(access_token, tenant_id)
+    for account in accounts:
+        if account["Name"].count(payment_data['PAYMENT']['payment']['property']):
+            ret_list.append(account)
+    return ret_list
+
+
+def build_payment_payload(payment_data: dict, account_id) -> dict:
+    """
+    Given a combined payment+invoice dict and an account code, return Xero payment payload.
+    """
+    # Parse and normalize the date
+    raw_date = payment_data["payment"]["date"]
+    try:
+        # Strip timezone and parse
+        parsed_date = datetime.strptime(raw_date.split(" MDT")[0], "%d %b %Y %H:%M:%S")
+        formatted_date = parsed_date.strftime("%Y-%m-%d")
+    except Exception as e:
+        raise ValueError(f"Could not parse payment date: {raw_date}") from e
+
+    # Use payment reference (e.g., Aptexx transaction ID) and optionally include method
+    payment_ref = f"Aptexx {payment_data['payment']['ref']}"
+
+    payload = {
+        "Payments": [
+            {
+                "Invoice": {
+                    "InvoiceID": payment_data["invoice"]["invoice_id"]
+                },
+                "Account": {
+                    "AccountID": account_id
+                },
+                "Date": formatted_date,
+                "Amount": payment_data["payment"]["amount"],
+                "Reference": payment_ref
+            }
+        ]
+    }
+
+    return payload
+
+def apply_payment(payment_data):
     """
     Applies a payment to a given invoice via Xero API.
     """
+    access_token, tenant_id = authorize_xero(org_name="Parklane Properties")
+    account = get_bank_info(access_token, tenant_id, payment_data)
+    if len(account) == 0:
+        print(f"No matching bank account found for payment: {payment_data['PAYMENT']['payment']['property']}")
+        return None
+    elif len(account) > 1:
+        new_account = []
+        for acc in account:
+            if acc["Name"].count('Checking'):
+                new_account.append(acc)
+        if len(new_account) == 1:
+            account = new_account
+        elif len(new_account) == 0:
+            print(f"No matching bank account found for payment: {payment_data['PAYMENT']['payment']['property']}")
+            return None
+        else:
+            print(f"Multiple matching bank accounts found for payment: {payment_data['PAYMENT']['payment']['property']}")
+            return None  
+    data = build_payment_payload(payment_data['PAYMENT'], account[0]["AccountID"])
+
     url = f'https://api.xero.com/api.xro/2.0/Payments'
     headers = {
         'Authorization': f'Bearer {access_token}',
@@ -260,24 +330,10 @@ def apply_payment(access_token, tenant_id, invoice_id, amount, date, code):
         'Content-Type': 'application/json'
     }
 
-    data = {
-        "Payments": [
-            {
-                "Invoice": {
-                    "InvoiceID": invoice_id
-                },
-                "Account": {
-                    "Code": code  # replace with your bank or payment account code in Xero
-                },
-                "Date": date,
-                "Amount": amount
-            }
-        ]
-    }
-
     response = requests.post(url, headers=headers, json=data)
     response.raise_for_status()
     return response.json()
+    #return None
 
 def authorize_xero(org_name="Test"):
     tokens = load_tokens()

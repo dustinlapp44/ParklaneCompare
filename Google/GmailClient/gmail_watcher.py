@@ -16,7 +16,8 @@ CREDENTIALS_PATH = os.path.join(BASE_DIR, 'credentials.json')
 TOKEN_PATH = os.path.join(BASE_DIR, 'token.json')
 
 # If modifying these SCOPES, delete token.json to refresh
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+SCOPES = ['https://www.googleapis.com/auth/gmail.readonly',
+          'https://www.googleapis.com/auth/gmail.send']
 
 def get_gmail_service():
     creds = None
