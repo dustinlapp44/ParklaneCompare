@@ -106,8 +106,8 @@ if __name__ == "__main__":
     invoice_end_date = "2025-08-02"
     refresh_invoice_cache(invoice_start_date, invoice_end_date)
 
-    payment_start_date = "2025-08-04"
-    payment_end_date = "2025-08-05"
+    payment_start_date = "2025-08-05"
+    payment_end_date = "2025-08-06"
     process_payments(payment_start_date, payment_end_date)
 
     
