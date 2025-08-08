@@ -24,10 +24,21 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --name PDFCSVTool.exe PDFParser/app.py
+        pyinstaller --onefile --windowed --name PCJTool.exe PDFParser/app.py
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: latest
+        release_name: Latest Build
+        draft: false
+        prerelease: false
+        files: dist/PCJTool.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload executable
       uses: actions/upload-artifact@v4
       with:
-        name: PDFCSVTool
-        path: dist/PDFCSVTool.exe
+        name: PCJTool
+        path: dist/PCJTool.exe
