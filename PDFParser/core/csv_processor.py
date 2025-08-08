@@ -17,6 +17,34 @@ class CSVProcessor:
     
 
 # 🔧 Formatter functions
+def organize_tradify_report(df: pd.DataFrame, job_col: str = "job_id", amount_col: str = "hours") -> pd.DataFrame:
+    """
+    Groups rows by job_id and appends a subtotal row after each group.
+
+    - df: Input DataFrame
+    - job_col: Column name to group by
+    - amount_col: Column name to sum
+
+    Returns: DataFrame with subtotal rows inserted.
+    """
+    result_parts = []
+
+    for job_id, group in df.groupby(job_col, sort=False):
+        # Append the group rows
+        result_parts.append(group)
+
+        # Create subtotal row
+        subtotal_row = {col: "" for col in df.columns}
+        subtotal_row[job_col] = ""  # Keep job_id blank for total rows
+        subtotal_row[amount_col] = group[amount_col].sum()
+
+        # Append subtotal as DataFrame
+        result_parts.append(pd.DataFrame([subtotal_row], columns=df.columns))
+
+    # Concatenate back into one DataFrame
+    result_df = pd.concat(result_parts, ignore_index=True)
+
+    return result_df
 
 def strip_whitespace(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = [col.strip() for col in df.columns]
