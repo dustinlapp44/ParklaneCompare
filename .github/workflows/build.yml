@@ -30,7 +30,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: latest
-        release_name: Latest Build
+        name: Latest Build
         draft: false
         prerelease: false
         files: dist/PCJTool.exe
