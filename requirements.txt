@@ -12,3 +12,4 @@ flask-socketio
 eventlet
 bs4
 pdfplumber
+tksheet

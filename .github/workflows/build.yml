@@ -24,10 +24,10 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --name PDFCSVTool PDFParser/app.py
+        pyinstaller --onefile --windowed --name PDFCSVTool.exe PDFParser/app.py
 
     - name: Upload executable
       uses: actions/upload-artifact@v4
       with:
-        name: PDFCSVTool.exe
+        name: PDFCSVTool
         path: dist/PDFCSVTool.exe
