@@ -11,3 +11,4 @@ google-auth-oauthlib
 flask-socketio
 eventlet
 bs4
+pdfplumber
