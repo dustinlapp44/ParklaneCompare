@@ -17,7 +17,7 @@ class CSVProcessor:
     
 
 
-def tradify_grouping(df: pd.DataFrame, job_col: str = "job_id", amount_col: str = "hours") -> pd.DataFrame:
+def tradify_grouping(df: pd.DataFrame, job_col: str = "Job No", amount_col: str = "Hours") -> pd.DataFrame:
     result_parts = []
 
     for job_id, group in df.groupby(job_col, sort=False):
@@ -41,11 +41,11 @@ def tradify_grouping(df: pd.DataFrame, job_col: str = "job_id", amount_col: str 
 
 def generate_hourly(df: pd.DataFrame, hourly_rate: float = 62) -> pd.DataFrame:
     ## Add check for hours being in float form already
-    if df['hours'].dtype == str:
-        df['hours'] = df['hours'].apply(convert_hours_to_float)
-    new_amount = df['hours'] * hourly_rate
-    hours_index = df.columns.get_loc('hours')
-    df.insert(hours_index + 1, 'amount', new_amount)
+    if df['Hours'].dtype == str:
+        df['Hours'] = df['Hours'].apply(convert_hours_to_float)
+    new_amount = df['Hours'] * hourly_rate
+    hours_index = df.columns.get_loc('Hours')
+    df.insert(hours_index + 1, 'Amount', new_amount)
     return df
 
 def strip_whitespace(df: pd.DataFrame) -> pd.DataFrame:
