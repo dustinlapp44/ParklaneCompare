@@ -16,17 +16,8 @@ class CSVProcessor:
 
     
 
-# 🔧 Formatter functions
-def organize_tradify_report(df: pd.DataFrame, job_col: str = "job_id", amount_col: str = "hours") -> pd.DataFrame:
-    """
-    Groups rows by job_id and appends a subtotal row after each group.
 
-    - df: Input DataFrame
-    - job_col: Column name to group by
-    - amount_col: Column name to sum
-
-    Returns: DataFrame with subtotal rows inserted.
-    """
+def tradify_grouping(df: pd.DataFrame, job_col: str = "job_id", amount_col: str = "hours") -> pd.DataFrame:
     result_parts = []
 
     for job_id, group in df.groupby(job_col, sort=False):
@@ -45,6 +36,17 @@ def organize_tradify_report(df: pd.DataFrame, job_col: str = "job_id", amount_co
     result_df = pd.concat(result_parts, ignore_index=True)
 
     return result_df
+
+# 🔧 Formatter functions
+
+def generate_hourly(df: pd.DataFrame, hourly_rate: float = 62) -> pd.DataFrame:
+    ## Add check for hours being in float form already
+    if df['hours'].dtype == str:
+        df['hours'] = df['hours'].apply(convert_hours_to_float)
+    new_amount = df['hours'] * hourly_rate
+    hours_index = df.columns.get_loc('hours')
+    df.insert(hours_index + 1, 'amount', new_amount)
+    return df
 
 def strip_whitespace(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = [col.strip() for col in df.columns]

@@ -2,7 +2,7 @@ from tkinter import filedialog, messagebox, ttk
 from tksheet import Sheet
 import tkinter as tk
 import pandas as pd
-from core.csv_processor import CSVProcessor, strip_whitespace, convert_hours_to_float, organize_tradify_report
+from core.csv_processor import CSVProcessor, strip_whitespace, convert_hours_to_float, tradify_grouping, generate_hourly
 from core.pdf_parser import PDFParser  # <- if you want to keep it around
 from core.csv_exporter import CSVExporter
 
@@ -43,15 +43,22 @@ class PDFCSVApp:
 
         # Format options
         options_frame = ttk.LabelFrame(frame, text="Format Options")
-        options_frame.pack(fill=tk.X, pady=5)
+        options_frame.pack(fill=tk.X, pady=10)
 
-        parent.strip_ws_var = tk.BooleanVar(value=True)
+        parent.strip_ws_var = tk.BooleanVar(value=False)
         parent.convert_hours_var = tk.BooleanVar(value=False)
+        parent.generate_labour_var = tk.BooleanVar(value=False)
         parent.organize_tradify_var = tk.BooleanVar(value=False)
 
         ttk.Checkbutton(options_frame, text="Strip Whitespace", variable=parent.strip_ws_var).pack(side=tk.LEFT, padx=5)
         ttk.Checkbutton(options_frame, text="Convert HH:MM to Float", variable=parent.convert_hours_var).pack(side=tk.LEFT, padx=5)
-        ttk.Checkbutton(options_frame, text="Organize Tradify Report", variable=parent.organize_tradify_var).pack(side=tk.LEFT, padx=5)
+        ttk.Checkbutton(options_frame, text="Generate Labour", variable=parent.generate_labour_var).pack(side=tk.LEFT, padx=5)
+        ttk.Checkbutton(options_frame, text="Tradify Grouping", variable=parent.organize_tradify_var).pack(side=tk.LEFT, padx=5)
+
+        # Workflow Panel
+        #workflow_frame = ttk.LabelFrame(frame, text="Workflow")
+        #workflow_frame.pack(fill=tk.X, pady=10)
+        #ttk.Button(workflow_frame, text="Tradify Report Cleanup", command=self.tradify_workflow).pack(side=tk.LEFT, padx=5)
 
         # Buttons
         button_frame = ttk.Frame(frame)
@@ -65,6 +72,16 @@ class PDFCSVApp:
         sheet = Sheet(frame)
         sheet.pack(fill=tk.BOTH, expand=True)
         parent.sheet = sheet
+
+    def tradify_workflow(self):
+        if self.dataframe.empty:
+            print("[WARNING] No data to organize.")
+            messagebox.showwarning("No Data", "No data to organize.")
+            return
+        self.dataframe = convert_hours_to_float(self.dataframe)
+        self.dataframe = generate_hourly(self.dataframe)
+        self.dataframe = tradify_grouping(self.dataframe)
+        self._display_dataframe(self.csv_tab.sheet, highlight_changes=True)
 
     def import_csv(self):
         file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
@@ -81,7 +98,9 @@ class PDFCSVApp:
         if self.csv_tab.convert_hours_var.get():
             formatters.append(convert_hours_to_float)
         if self.csv_tab.organize_tradify_var.get():
-            formatters.append(organize_tradify_report)
+            formatters.append(tradify_grouping)
+        if self.csv_tab.generate_labour_var.get():
+            formatters.append(generate_hourly)
 
         try:
             processor = CSVProcessor(file_path, formatters)
@@ -145,51 +164,38 @@ class PDFCSVApp:
             "single_select", "row_select", "column_width_resize", "arrowkeys",
             "rc_select", "copy", "paste", "delete", "undo", "edit_cell"))
 
-        if highlight_changes and not self.original_df.empty:
-            changed_cells = []
-
-            # Columns used to match rows between old and new
-            if key_cols is None:
-                key_cols = [c for c in df.columns if c not in ("amount", "hours")]
-
-            # Build lookup from original_df keyed by stable ID columns
-            orig_lookup = {
-                tuple(str(row[col]).strip() for col in key_cols): row
-                for _, row in self.original_df.iterrows()
-            }
-
-            for new_idx, new_row in df.iterrows():
-                key = tuple(str(new_row[col]).strip() for col in key_cols)
-
-                if key in orig_lookup:
-                    # Match found → compare cell by cell
-                    old_row = orig_lookup[key]
-                    for col_idx, col_name in enumerate(df.columns):
-                        val_new = str(new_row[col_name]).strip()
-                        val_old = str(old_row[col_name]).strip()
-                        if val_new != val_old:
-                            changed_cells.append((new_idx, col_idx))
-                else:
-                    # No match → this is a new row → highlight whole row
-                    for col_idx in range(len(df.columns)):
-                        changed_cells.append((new_idx, col_idx))
-
-        # Apply highlights
-        for (r, c) in changed_cells:
-            sheet_widget.highlight_cells(row=r, column=c, bg="#9dddd2")
-
         #if highlight_changes and not self.original_df.empty:
         #    changed_cells = []
 #
-        #    for row in range(min(len(self.original_df), len(self.dataframe))):
-        #        for col in range(len(df.columns)):
-        #            val_new = str(df.iat[row, col]).strip()
-        #            val_old = str(self.original_df.iat[row, col]).strip()
-        #            if val_new != val_old:
-        #                changed_cells.append((row, col))
+        #    # Columns used to match rows between old and new
+        #    if key_cols is None:
+        #        key_cols = [c for c in df.columns if c not in ("hours")]
 #
-            #for (r, c) in changed_cells:
-            #    sheet_widget.highlight_cells(row=r, column=c, bg="#9dddd2")
+        #    # Build lookup from original_df keyed by stable ID columns
+        #    orig_lookup = {
+        #        tuple(str(row[col]).strip() for col in key_cols): row
+        #        for _, row in self.original_df.iterrows()
+        #    }
+#
+        #    for new_idx, new_row in df.iterrows():
+        #        key = tuple(str(new_row[col]).strip() for col in key_cols)
+#
+        #        if key in orig_lookup:
+        #            # Match found → compare cell by cell
+        #            old_row = orig_lookup[key]
+        #            for col_idx, col_name in enumerate(df.columns):
+        #                val_new = str(new_row[col_name]).strip()
+        #                val_old = str(old_row[col_name]).strip()
+        #                if val_new != val_old:
+        #                    changed_cells.append((new_idx, col_idx))
+        #        else:
+        #            # No match → this is a new row → highlight whole row
+        #            for col_idx in range(len(df.columns)):
+        #                changed_cells.append((new_idx, col_idx))
+#
+        ## Apply highlights
+        #for (r, c) in changed_cells:
+        #    sheet_widget.highlight_cells(row=r, column=c, bg="#9dddd2")
 
     def run(self):
         self.root.mainloop()
