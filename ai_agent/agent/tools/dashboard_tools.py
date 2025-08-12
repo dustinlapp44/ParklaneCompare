@@ -46,9 +46,17 @@ class DashboardTool(BaseTool):
     
     def __init__(self):
         super().__init__()
-        self.notification_log_path = os.path.join(project_root, "ai_agent", "data", "notifications")
-        self.reports_path = os.path.join(project_root, "ai_agent", "data", "reports")
-        os.makedirs(self.reports_path, exist_ok=True)
+        self._notification_log_path = os.path.join(project_root, "ai_agent", "data", "notifications")
+        self._reports_path = os.path.join(project_root, "ai_agent", "data", "reports")
+        os.makedirs(self._reports_path, exist_ok=True)
+    
+    @property
+    def notification_log_path(self):
+        return self._notification_log_path
+    
+    @property
+    def reports_path(self):
+        return self._reports_path
     
     def _run(self, report_type: str, date_range: str = "7d", filters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
@@ -291,7 +299,7 @@ class DashboardTool(BaseTool):
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"dashboard_{report_type}_{timestamp}.json"
-        filepath = os.path.join(self.reports_path, filename)
+        filepath = os.path.join(self._reports_path, filename)
         
         with open(filepath, 'w') as f:
             json.dump(report, f, indent=2)

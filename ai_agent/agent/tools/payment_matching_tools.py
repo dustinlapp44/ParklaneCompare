@@ -61,7 +61,7 @@ class PaymentMatchingTool(BaseTool):
     def __init__(self):
         super().__init__()
         # Set paths after initialization
-        self._db_path = os.path.join(project_root, "Payments", "payments.db")
+        self._db_path = "/tmp/payments.db"  # Use the same path as payments_db.py
         self._test_data_path = os.path.join(project_root, "ai_agent", "data", "test_data", "mock_xero_data.json")
     
     @property
@@ -72,7 +72,7 @@ class PaymentMatchingTool(BaseTool):
     def test_data_path(self):
         return self._test_data_path
     
-    def _run(self, payment: Dict[str, Any], tenant_name: str, amount: float, 
+    def _run(self, payment: Dict[str, Any], tenant_name: str, amount: float,
              payment_date: str, reference: str, property_name: str) -> Dict[str, Any]:
         """
         Match payment to invoice using hybrid approach
@@ -84,20 +84,33 @@ class PaymentMatchingTool(BaseTool):
             payment_date: Payment date
             reference: Payment reference
             property_name: Property name
-            
+        
         Returns:
             Dictionary with matching results and reasoning
         """
         logger.info(f"Matching payment ${amount} for {tenant_name} at {property_name}")
         
         try:
+            # Step 0: Check for duplicate payments
+            if self._is_duplicate_payment(reference, amount, tenant_name):
+                return self._create_duplicate_result(
+                    f"Payment reference {reference} already processed for {tenant_name}",
+                    recommendations=["Skip this payment", "Verify if this is a new payment"]
+                )
+            
             # Step 1: Get available invoices from database
             invoices = self._get_tenant_invoices(tenant_name)
             
             if not invoices:
+                # This is the key scenario: payment arrived before invoice
                 return self._create_no_match_result(
-                    f"No invoices found for tenant: {tenant_name}",
-                    recommendations=["Verify tenant name", "Check if invoice exists in Xero"]
+                    f"No invoice found for tenant: {tenant_name}. Payment may have arrived before invoice creation.",
+                    recommendations=[
+                        "Flag for human review - invoice may need to be created in Xero",
+                        "This is normal business flow - payments can arrive before invoices",
+                        "Do not trigger database sync for this scenario"
+                    ],
+                    business_logic="Payment arrived before invoice creation - this is normal business flow"
                 )
             
             # Step 2: Algorithmic matching
@@ -140,9 +153,29 @@ class PaymentMatchingTool(BaseTool):
     
     def _query_database(self, tenant_name: str) -> List[Dict[str, Any]]:
         """Query local database for tenant invoices"""
-        # TODO: Implement actual database query using your existing Payments.payments_db
-        # For now, return empty list to trigger mock data fallback
-        return []
+        try:
+            from Payments.payments_db import get_invoices_by_contact
+            
+            # Get invoices from local database
+            invoices = get_invoices_by_contact(tenant_name)
+            
+            # Convert to expected format
+            formatted_invoices = []
+            for inv in invoices:
+                formatted_invoices.append({
+                    'InvoiceID': inv[0],  # invoice_id
+                    'ContactName': inv[1],  # contact_name
+                    'AmountDue': inv[3],  # amount_due
+                    'Date': inv[5],  # issue_date
+                    'Status': inv[4],  # status
+                    'Reference': inv[2]  # reference
+                })
+            
+            return formatted_invoices
+            
+        except Exception as e:
+            logger.warning(f"Database query failed: {e}")
+            return []
     
     def _get_mock_invoices(self, tenant_name: str) -> List[Dict[str, Any]]:
         """Get mock invoices for testing"""
@@ -293,6 +326,42 @@ class PaymentMatchingTool(BaseTool):
             "warnings": warnings or [],
             "recommendations": [],
             "invoice_details": invoice,
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    def _is_duplicate_payment(self, reference: str, amount: float, tenant_name: str) -> bool:
+        """Check if payment has already been processed"""
+        try:
+            import sqlite3
+            
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Check payment_tracking table
+            cursor.execute('''
+                SELECT COUNT(*) FROM payment_tracking 
+                WHERE reference = ? AND amount = ?
+            ''', (reference, amount))
+            
+            count = cursor.fetchone()[0]
+            conn.close()
+            
+            return count > 0
+            
+        except Exception as e:
+            logger.warning(f"Error checking duplicate payment: {e}")
+            return False
+    
+    def _create_duplicate_result(self, reasoning: str, recommendations: List[str] = None) -> Dict[str, Any]:
+        """Create a duplicate payment result"""
+        return {
+            "success": False,
+            "matched_invoice_id": None,
+            "confidence_score": 0.0,
+            "match_type": "duplicate",
+            "reasoning": reasoning,
+            "warnings": ["Duplicate payment detected"],
+            "recommendations": recommendations or [],
             "timestamp": datetime.now().isoformat()
         }
     

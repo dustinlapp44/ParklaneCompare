@@ -49,8 +49,13 @@ class NotificationTool(BaseTool):
     
     def __init__(self):
         super().__init__()
-        self.notification_log_path = os.path.join(project_root, "ai_agent", "data", "notifications")
-        os.makedirs(self.notification_log_path, exist_ok=True)
+        # Initialize notification log path
+        self._notification_log_path = os.path.join(project_root, "ai_agent", "data", "notifications")
+        os.makedirs(self._notification_log_path, exist_ok=True)
+    
+    @property
+    def notification_log_path(self):
+        return self._notification_log_path
     
     def _run(self, notification_type: str, items: List[Dict[str, Any]], 
              priority: str, recipients: List[str], subject: str, message: str) -> Dict[str, Any]:

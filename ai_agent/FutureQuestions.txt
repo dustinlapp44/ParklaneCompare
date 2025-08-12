@@ -1,0 +1,6 @@
+1. Some kind of Stat or notifier on the webpage that indicates if gpu or cpu is being used for agent. Should be pretty obvious since time difference will be huge
+2. Lots of create_data and test_functionality files have been created, how do we organize or cleanup
+3. Some kind of test, which will test the differences between the original payments program, and now the agent version. will need to use some live data, but dont make the payments. Create a log of matches/misses, when the agent is used, etc
+4. Clean up the code, need to finalize a logging system that wil be useful for future developing/debugging sessions, while also allowing human auditing. 
+5. Do some testing on live data, can be combined  with step 3
+6. Get some test data, raw invoices, payments, etc. This can be referenced when testing or adding functionality

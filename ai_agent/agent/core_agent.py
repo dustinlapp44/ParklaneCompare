@@ -25,6 +25,11 @@ from langchain.memory import ConversationBufferMemory
 from .tools.email_tools import EmailParsingTool
 from .tools.xero_tools import XeroInvoiceTool, XeroPaymentTool
 from .tools.google_tools import GmailFetchTool
+from .tools.notification_tools import NotificationTool
+from .tools.dashboard_tools import DashboardTool
+from .tools.payment_matching_tools import PaymentMatchingTool
+from .tools.name_matching_tools import NameMatchingTool
+from .tools.ai_reasoning_tools import AIReasoningTool
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +38,7 @@ class PropertyManagementAgent:
     Main AI agent for property management tasks
     """
     
-    def __init__(self, llm=None, verbose: bool = True):
+    def __init__(self, llm=None, verbose: bool = False):
         """
         Initialize the property management agent
         
@@ -51,12 +56,15 @@ class PropertyManagementAgent:
         # Initialize tools
         self.tools = self._initialize_tools()
         
+        # LLM will be set later
+        self.llm = None
+        
         # Initialize agent (will be set up when LLM is available)
         self.agent_executor = None
         
         # Setup logging
         self._setup_logging()
-        
+    
     def _setup_logging(self):
         """Setup logging configuration"""
         log_dir = os.path.join(project_root, "ai_agent", "data", "logs")
@@ -78,9 +86,15 @@ class PropertyManagementAgent:
             GmailFetchTool(),
             XeroInvoiceTool(),
             XeroPaymentTool(),
+            NotificationTool(),
+            DashboardTool(),
+            PaymentMatchingTool(),
+            NameMatchingTool(),
+            AIReasoningTool(),
         ]
-        
-        logger.info(f"Initialized {len(tools)} tools")
+
+        if self.verbose:
+            logger.info(f"Initialized {len(tools)} tools")
         return tools
     
     def set_llm(self, llm):
@@ -220,3 +234,67 @@ Please execute this workflow step by step, showing your reasoning at each stage.
             }
             for tool in self.tools
         ]
+    
+    def process_payments_batch(self, payments: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Process multiple payments efficiently without individual LLM calls
+        
+        Args:
+            payments: List of payment dictionaries
+            
+        Returns:
+            Dictionary with batch processing results
+        """
+        if not self.agent_executor:
+            raise ValueError("LLM not set. Call set_llm() first.")
+        
+        logger.info(f"Processing {len(payments)} payments in batch")
+        
+        results = {
+            "processed": 0,
+            "matched": 0,
+            "unmatched": 0,
+            "errors": 0,
+            "details": []
+        }
+        
+        # Use algorithmic matching for efficiency
+        payment_matching_tool = next((tool for tool in self.tools if tool.name == "match_payment"), None)
+        
+        if not payment_matching_tool:
+            raise ValueError("Payment matching tool not found")
+        
+        for payment in payments:
+            try:
+                # Use direct tool call instead of LLM reasoning for each payment
+                match_result = payment_matching_tool._run(
+                    payment=payment,
+                    tenant_name=payment.get('person', ''),
+                    amount=payment.get('amount', 0),
+                    payment_date=payment.get('date', ''),
+                    reference=payment.get('ref', ''),
+                    property_name=payment.get('property', '')
+                )
+                
+                results["processed"] += 1
+                
+                if match_result.get("success", False):
+                    results["matched"] += 1
+                else:
+                    results["unmatched"] += 1
+                
+                results["details"].append({
+                    "payment": payment,
+                    "match_result": match_result
+                })
+                
+            except Exception as e:
+                logger.error(f"Error processing payment {payment.get('ref', 'unknown')}: {e}")
+                results["errors"] += 1
+                results["details"].append({
+                    "payment": payment,
+                    "error": str(e)
+                })
+        
+        logger.info(f"Batch processing complete: {results['matched']} matched, {results['unmatched']} unmatched, {results['errors']} errors")
+        return results
