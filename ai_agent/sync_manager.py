@@ -7,7 +7,6 @@ import sqlite3
 import json
 
 # Import our existing tools
-from agent.tools.database_sync_tools import DatabaseSyncTool
 from agent.tools.xero_tools import XeroInvoiceTool
 import Payments.payments_db as payments_db
 
@@ -20,7 +19,6 @@ class SyncManager:
     def __init__(self, sync_interval_hours: int = 6, db_path: str = "/tmp/payments.db"):
         self.sync_interval_hours = sync_interval_hours
         self.db_path = db_path
-        self.sync_tool = DatabaseSyncTool()
         self.xero_tool = XeroInvoiceTool()
         self.db_path = db_path
         
@@ -32,8 +30,74 @@ class SyncManager:
         # Logging
         self.logger = logging.getLogger(__name__)
         
-        # Initialize sync log
-        self._init_sync_log()
+        # Initialize database
+        self._init_database()
+    
+    def _init_database(self):
+        """Initialize the database and all required tables."""
+        try:
+            # Import the payments_db module to use its init_db function
+            import Payments.payments_db as payments_db
+            
+            # Initialize the main database tables
+            payments_db.init_db()
+            self.logger.info("Database tables initialized successfully")
+            
+            # Initialize sync log table
+            self._init_sync_log()
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize database: {e}")
+            # Try to create tables manually as fallback
+            self._create_tables_manually()
+    
+    def _create_tables_manually(self):
+        """Create database tables manually as fallback."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                # Create invoices table
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS invoices (
+                        invoice_id TEXT PRIMARY KEY,
+                        contact_name TEXT,
+                        reference TEXT,
+                        amount_due REAL,
+                        status TEXT,
+                        issue_date TEXT,
+                        due_date TEXT
+                    )
+                ''')
+                
+                # Create payments table
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS payments (
+                        payment_id TEXT PRIMARY KEY,
+                        invoice_id TEXT,
+                        amount REAL,
+                        date TEXT,
+                        reference TEXT,
+                        bank_transaction_id TEXT,
+                        status TEXT,
+                        FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id)
+                    )
+                ''')
+                
+                # Create payment_tracking table
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS payment_tracking (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        payment_ref TEXT UNIQUE,
+                        processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        status TEXT,
+                        details TEXT
+                    )
+                ''')
+                
+                conn.commit()
+                self.logger.info("Database tables created manually")
+                
+        except Exception as e:
+            self.logger.error(f"Failed to create tables manually: {e}")
     
     def _init_sync_log(self):
         """Initialize the sync_log table if it doesn't exist."""
@@ -102,7 +166,7 @@ class SyncManager:
         time_since_last_sync = datetime.now() - self.last_sync_time
         return time_since_last_sync >= timedelta(hours=self.sync_interval_hours)
     
-    def _perform_sync(self):
+    def _perform_sync(self, date_range_days: int = 90):
         """Perform the actual database sync."""
         sync_start = datetime.now()
         sync_id = None
@@ -111,13 +175,51 @@ class SyncManager:
             # Log sync start
             sync_id = self._log_sync_start("full")
             
+            # Emit detailed sync logs
+            try:
+                from web_dashboard.app import emit_sync_log
+                emit_sync_log(f"🔄 Starting database sync at {sync_start.strftime('%Y-%m-%d %H:%M:%S')}", "info")
+                emit_sync_log(f"📅 Sync date range: Last {date_range_days} days", "info")
+            except Exception as e:
+                # If web dashboard not available, just log to console
+                self.logger.info(f"🔄 Starting database sync at {sync_start.strftime('%Y-%m-%d %H:%M:%S')}")
+                self.logger.info(f"📅 Sync date range: Last {date_range_days} days")
+            
             # Sync invoices first
+            try:
+                emit_sync_log("📋 Syncing invoices from Xero...", "info")
+            except NameError:
+                self.logger.info("📋 Syncing invoices from Xero...")
             self.logger.info("Syncing invoices...")
-            invoice_result = self._sync_invoices()
+            invoice_result = self._sync_invoices(date_range_days=date_range_days)
+            
+            # Log invoice sync results
+            try:
+                emit_sync_log(f"✅ Invoice sync completed: {invoice_result.get('processed', 0)} processed, {invoice_result.get('added', 0)} added, {invoice_result.get('updated', 0)} updated", "success")
+                if invoice_result.get('error'):
+                    emit_sync_log(f"❌ Invoice sync error: {invoice_result.get('error')}", "error")
+            except NameError:
+                self.logger.info(f"✅ Invoice sync completed: {invoice_result.get('processed', 0)} processed, {invoice_result.get('added', 0)} added, {invoice_result.get('updated', 0)} updated")
+                if invoice_result.get('error'):
+                    self.logger.error(f"❌ Invoice sync error: {invoice_result.get('error')}")
             
             # Sync payments
+            try:
+                emit_sync_log("💰 Syncing payments from Xero...", "info")
+            except NameError:
+                self.logger.info("💰 Syncing payments from Xero...")
             self.logger.info("Syncing payments...")
             payment_result = self._sync_payments()
+            
+            # Log payment sync results
+            try:
+                emit_sync_log(f"✅ Payment sync completed: {payment_result.get('processed', 0)} processed, {payment_result.get('added', 0)} added, {payment_result.get('updated', 0)} updated", "success")
+                if payment_result.get('error'):
+                    emit_sync_log(f"❌ Payment sync error: {payment_result.get('error')}", "error")
+            except NameError:
+                self.logger.info(f"✅ Payment sync completed: {payment_result.get('processed', 0)} processed, {payment_result.get('added', 0)} added, {payment_result.get('updated', 0)} updated")
+                if payment_result.get('error'):
+                    self.logger.error(f"❌ Payment sync error: {payment_result.get('error')}")
             
             # Update sync log
             total_processed = invoice_result.get('processed', 0) + payment_result.get('processed', 0)
@@ -127,20 +229,63 @@ class SyncManager:
             self._log_sync_complete(sync_id, "success", total_processed, total_added, total_updated)
             self.last_sync_time = datetime.now()
             
+            # Final summary
+            sync_duration = datetime.now() - sync_start
+            try:
+                emit_sync_log(f"🎉 Sync completed successfully in {sync_duration.total_seconds():.1f}s: {total_added} new records, {total_updated} updated", "success")
+            except NameError:
+                self.logger.info(f"🎉 Sync completed successfully in {sync_duration.total_seconds():.1f}s: {total_added} new records, {total_updated} updated")
             self.logger.info(f"Sync completed successfully: {total_added} new records, {total_updated} updated")
             
         except Exception as e:
-            self.logger.error(f"Sync failed: {e}")
+            error_msg = f"Sync failed: {e}"
+            self.logger.error(error_msg)
+            try:
+                emit_sync_log(f"💥 {error_msg}", "error")
+            except NameError:
+                self.logger.error(f"💥 {error_msg}")
             if sync_id:
                 self._log_sync_complete(sync_id, "error", 0, 0, 0, str(e))
     
-    def _sync_invoices(self) -> Dict[str, Any]:
+    def _sync_invoices(self, date_range_days: int = 90) -> Dict[str, Any]:
         """Sync invoices from Xero."""
         try:
-            # Get invoices from Xero (using mock data for now)
-            xero_invoices = self.xero_tool._get_mock_invoices()
+            # Set date range for sync
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=date_range_days)
+            
+            try:
+                from web_dashboard.app import emit_sync_log
+                emit_sync_log(f"📅 Sync date range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}", "info")
+            except ImportError:
+                self.logger.info(f"📅 Sync date range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
+            
+            # Get invoices from Xero API
+            try:
+                emit_sync_log("🔍 Fetching invoices from Xero API...", "info")
+            except NameError:
+                self.logger.info("🔍 Fetching invoices from Xero API...")
+            
+            # Use the real Xero client to get invoices
+            from XeroClient.xero_client import pull_tenant_invoices
+            xero_invoices = pull_tenant_invoices(
+                start_date=start_date.strftime("%Y-%m-%d"),
+                end_date=end_date.strftime("%Y-%m-%d")
+            )
+            
+            try:
+                emit_sync_log(f"📊 Found {len(xero_invoices)} invoices from Xero API", "info")
+                emit_sync_log(f"📅 Date range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}", "info")
+            except NameError:
+                self.logger.info(f"📊 Found {len(xero_invoices)} invoices from Xero API")
+                self.logger.info(f"📅 Date range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
             
             # Upsert to local database
+            try:
+                emit_sync_log("💾 Updating local database...", "info")
+            except NameError:
+                self.logger.info("💾 Updating local database...")
+            
             processed = 0
             added = 0
             updated = 0
@@ -151,19 +296,37 @@ class SyncManager:
             added = len(xero_invoices)  # Simplified for now
             updated = 0
             
+            try:
+                emit_sync_log(f"💾 Database updated: {processed} invoices processed", "success")
+            except NameError:
+                self.logger.info(f"💾 Database updated: {processed} invoices processed")
+            
             return {
                 'processed': processed,
                 'added': added,
-                'updated': updated
+                'updated': updated,
+                'date_range': f"{start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
             }
             
         except Exception as e:
-            self.logger.error(f"Error syncing invoices: {e}")
+            error_msg = f"Error syncing invoices: {e}"
+            self.logger.error(error_msg)
+            try:
+                from web_dashboard.app import emit_sync_log
+                emit_sync_log(f"❌ {error_msg}", "error")
+            except ImportError:
+                self.logger.error(f"❌ {error_msg}")
             return {'processed': 0, 'added': 0, 'updated': 0, 'error': str(e)}
     
     def _sync_payments(self) -> Dict[str, Any]:
         """Sync payments from Xero."""
         try:
+            try:
+                from web_dashboard.app import emit_sync_log
+                emit_sync_log("💳 Payments sync not yet implemented - payments are handled through invoices", "warning")
+            except ImportError:
+                self.logger.warning("💳 Payments sync not yet implemented - payments are handled through invoices")
+            
             # For now, payments are handled through invoices
             # In a real implementation, you'd call Xero payments API
             return {
@@ -174,7 +337,13 @@ class SyncManager:
             }
             
         except Exception as e:
-            self.logger.error(f"Error syncing payments: {e}")
+            error_msg = f"Error syncing payments: {e}"
+            self.logger.error(error_msg)
+            try:
+                from web_dashboard.app import emit_sync_log
+                emit_sync_log(f"❌ {error_msg}", "error")
+            except ImportError:
+                self.logger.error(f"❌ {error_msg}")
             return {'processed': 0, 'added': 0, 'updated': 0, 'error': str(e)}
     
     def _log_sync_start(self, sync_type: str) -> int:
@@ -260,10 +429,15 @@ class SyncManager:
         next_sync = self.last_sync_time + timedelta(hours=self.sync_interval_hours)
         return next_sync.isoformat()
     
-    def force_sync_now(self):
+    def force_sync_now(self, date_range_days: int = 90):
         """Force an immediate sync (useful for testing or manual triggers)."""
-        self.logger.info("Force sync requested")
-        self._perform_sync()
+        self.logger.info(f"Force sync requested for last {date_range_days} days")
+        try:
+            from web_dashboard.app import emit_sync_log
+            emit_sync_log(f"🚀 Force sync requested by user for last {date_range_days} days", "info")
+        except ImportError:
+            self.logger.info(f"🚀 Force sync requested by user for last {date_range_days} days")
+        self._perform_sync(date_range_days=date_range_days)
     
     def check_payment_invoice_relationship(self, payment_data: Dict[str, Any]) -> Dict[str, Any]:
         """

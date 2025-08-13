@@ -4,3 +4,6 @@
 4. Clean up the code, need to finalize a logging system that wil be useful for future developing/debugging sessions, while also allowing human auditing. 
 5. Do some testing on live data, can be combined  with step 3
 6. Get some test data, raw invoices, payments, etc. This can be referenced when testing or adding functionality
+7. New tab/page for webpage, where we can upload the tradify invoice reports, and seperate jobs from parts
+8. Seems like multiple different programs need to be running at once, need a single script that can start everything and monitor it all
+9. Does the agent have the ability to pull the aptexx email in the chat on the dashboard?

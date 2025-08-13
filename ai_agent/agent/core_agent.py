@@ -6,9 +6,11 @@ Handles workflow orchestration and tool management
 import os
 import sys
 import logging
+import traceback
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import json
+import time
 
 # Add project root to path for imports
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -30,6 +32,10 @@ from .tools.dashboard_tools import DashboardTool
 from .tools.payment_matching_tools import PaymentMatchingTool
 from .tools.name_matching_tools import NameMatchingTool
 from .tools.ai_reasoning_tools import AIReasoningTool
+
+# Import logging utilities
+from utils.logger import get_agent_logger
+from utils.logging_decorators import log_agent_action
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +70,7 @@ class PropertyManagementAgent:
         
         # Setup logging
         self._setup_logging()
+        self.agent_logger = get_agent_logger()
     
     def _setup_logging(self):
         """Setup logging configuration"""
@@ -158,6 +165,7 @@ When processing payments, follow this workflow:
 
 Always maintain data integrity and provide clear audit trails."""
     
+    @log_agent_action("workflow_execution")
     def run_workflow(self, workflow_name: str, **kwargs) -> Dict[str, Any]:
         """
         Run a specific workflow
@@ -172,6 +180,15 @@ Always maintain data integrity and provide clear audit trails."""
         if not self.agent_executor:
             raise ValueError("LLM not set. Call set_llm() first.")
         
+        # Log workflow start
+        self.agent_logger.log_agent_action(
+            action="workflow_start",
+            tool="core_agent",
+            input_data={"workflow_name": workflow_name, "kwargs": kwargs},
+            output_data={},
+            reasoning=f"Starting {workflow_name} workflow"
+        )
+        
         logger.info(f"Starting workflow: {workflow_name}")
         
         # Create workflow-specific prompt
@@ -181,18 +198,63 @@ Always maintain data integrity and provide clear audit trails."""
         }
         
         if workflow_name not in workflow_prompts:
-            raise ValueError(f"Unknown workflow: {workflow_name}")
+            error_msg = f"Unknown workflow: {workflow_name}"
+            self.agent_logger.log_error(
+                error_type="unknown_workflow",
+                error_message=error_msg,
+                context={"workflow_name": workflow_name, "available_workflows": list(workflow_prompts.keys())}
+            )
+            raise ValueError(error_msg)
         
         # Prepare the input for the agent
         input_text = workflow_prompts[workflow_name].format(**kwargs)
         
         try:
+            start_time = time.time()
             result = self.agent_executor.invoke({"input": input_text})
+            duration_ms = (time.time() - start_time) * 1000
+            
+            # Log workflow completion
+            self.agent_logger.log_agent_action(
+                action="workflow_complete",
+                tool="core_agent",
+                input_data={"workflow_name": workflow_name, "kwargs": kwargs},
+                output_data={"result": str(result), "duration_ms": duration_ms},
+                reasoning=f"Completed {workflow_name} workflow successfully"
+            )
+            
+            # Log performance metric
+            self.agent_logger.log_performance_metric(
+                metric_name=f"{workflow_name}_workflow_duration",
+                value=duration_ms,
+                unit="milliseconds",
+                context={"workflow_name": workflow_name}
+            )
+            
             logger.info(f"Workflow {workflow_name} completed successfully")
-            return result
+            return {
+                "success": True,
+                "workflow_name": workflow_name,
+                "result": result,
+                "duration_ms": duration_ms,
+                "timestamp": datetime.now().isoformat()
+            }
         except Exception as e:
+            # Log workflow error
+            self.agent_logger.log_error(
+                error_type=f"{workflow_name}_workflow_error",
+                error_message=str(e),
+                stack_trace=traceback.format_exc(),
+                context={"workflow_name": workflow_name, "kwargs": kwargs}
+            )
+            
             logger.error(f"Workflow {workflow_name} failed: {str(e)}")
-            raise
+            return {
+                "success": False,
+                "workflow_name": workflow_name,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
     
     def _get_payment_workflow_prompt(self) -> str:
         """Get the prompt for payment processing workflow"""

@@ -109,8 +109,7 @@ class PaymentMatchingTool(BaseTool):
                         "Flag for human review - invoice may need to be created in Xero",
                         "This is normal business flow - payments can arrive before invoices",
                         "Do not trigger database sync for this scenario"
-                    ],
-                    business_logic="Payment arrived before invoice creation - this is normal business flow"
+                    ]
                 )
             
             # Step 2: Algorithmic matching

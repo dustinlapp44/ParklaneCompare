@@ -89,7 +89,7 @@
             backdrop-filter: blur(10px);
         }
         
-        .sync-panel {
+        .sync-panel, .email-panel {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             padding: 20px;
@@ -98,16 +98,36 @@
             margin-top: 20px;
         }
         
-        .sync-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
+            .sync-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .email-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
         
         .status-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
+        }
+        
+        .database-stats .status-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .database-stats .status-item {
+            text-align: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .status-item {
@@ -234,6 +254,135 @@
 
         .btn-chat:hover {
             background: #3182ce;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .status-badge.needs-review {
+            background: #fef5e7;
+            color: #d69e2e;
+            border: 1px solid #f6e05e;
+        }
+
+        .status-badge.completed {
+            background: #f0fff4;
+            color: #38a169;
+            border: 1px solid #68d391;
+        }
+
+        .status-badge.failed {
+            background: #fed7d7;
+            color: #e53e3e;
+            border: 1px solid #fc8181;
+        }
+
+        .status-badge.skipped {
+            background: #e6fffa;
+            color: #319795;
+            border: 1px solid #81e6d9;
+        }
+
+        .terminal-section {
+            margin-top: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #2d3748;
+            color: white;
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .terminal-header:hover {
+            background: #4a5568;
+        }
+
+        .terminal-toggle {
+            font-size: 0.9em;
+            transition: transform 0.3s ease;
+        }
+
+        .terminal-content {
+            background: #1a202c;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+
+        .terminal-output {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 16px;
+            line-height: 1.4;
+        }
+
+        .terminal-line {
+            margin-bottom: 4px;
+            word-wrap: break-word;
+        }
+
+        .terminal-line.info {
+            color: #68d391;
+        }
+
+        .terminal-line.warning {
+            color: #f6e05e;
+        }
+
+        .terminal-line.error {
+            color: #fc8181;
+        }
+
+        .terminal-line.success {
+            color: #68d391;
+        }
+
+        .terminal-controls {
+            padding: 12px 16px;
+            background: #2d3748;
+            border-top: 1px solid #4a5568;
+            display: flex;
+            gap: 10px;
+        }
+
+        .terminal-controls .btn {
+            padding: 6px 12px;
+            font-size: 0.8em;
+        }
+
+        .force-sync-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .date-range-select {
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9em;
+            background: white;
+        }
+
+        .force-sync-section label {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #4a5568;
         }
 
         .chat-container {
@@ -387,16 +536,17 @@
                 <div class="panel-header">
                     <div class="panel-title">💬 AI Chat</div>
                     <div id="selectedJobInfo"></div>
+                    <button class="btn btn-secondary" onclick="clearJobSelection()" id="clearSelectionBtn" style="display: none;">Clear Selection</button>
                 </div>
                 <div class="chat-container">
                     <div class="chat-messages" id="chatMessages">
                         <div class="message ai">
                             <div class="message-header">AI Agent</div>
-                            <div>Hello! I'm here to help you review jobs and answer questions. Select a job to start chatting.</div>
+                            <div>Hello! I'm here to help you review jobs and answer questions. You can chat with me about anything related to the AI agent, jobs, or the system. Try asking me something!</div>
                         </div>
                     </div>
                     <div class="chat-input">
-                        <input type="text" id="chatInput" placeholder="Ask a question about the selected job..." disabled>
+                        <input type="text" id="chatInput" placeholder="Ask me anything about the AI agent or jobs..." onkeypress="if(event.key==='Enter') sendMessage()">
                         <button onclick="sendMessage()">Send</button>
                     </div>
                 </div>
@@ -430,12 +580,96 @@
                         </div>
                     </div>
                 </div>
+                <div class="database-stats">
+                    <h6>Database Contents</h6>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <strong>Total Invoices:</strong> <span id="db-invoices">0</span>
+                        </div>
+                        <div class="status-item">
+                            <strong>Unpaid Invoices:</strong> <span id="db-unpaid">0</span>
+                        </div>
+                        <div class="status-item">
+                            <strong>Paid Invoices:</strong> <span id="db-paid">0</span>
+                        </div>
+                        <div class="status-item">
+                            <strong>Total Payments:</strong> <span id="db-payments">0</span>
+                        </div>
+                        <div class="status-item">
+                            <strong>Unpaid Amount:</strong> <span id="db-unpaid-amount">$0</span>
+                        </div>
+                        <div class="status-item">
+                            <strong>Payment Tracking:</strong> <span id="db-tracking">0</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="sync-controls">
                     <h6>Sync Controls</h6>
                     <div class="control-buttons">
                         <button class="btn btn-success" onclick="startSync()">Start Background Sync</button>
                         <button class="btn btn-warning" onclick="stopSync()">Stop Background Sync</button>
-                        <button class="btn btn-info" onclick="forceSync()">Force Sync Now</button>
+                        <div class="force-sync-section">
+                            <label for="dateRange">Date Range:</label>
+                            <select id="dateRange" class="date-range-select">
+                                <option value="7">Last 7 days</option>
+                                <option value="30">Last 30 days</option>
+                                <option value="90" selected>Last 90 days</option>
+                                <option value="180">Last 180 days</option>
+                                <option value="365">Last 365 days</option>
+                            </select>
+                            <button class="btn btn-info" onclick="forceSync()">Force Sync Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Terminal Output Section -->
+            <div class="terminal-section">
+                <div class="terminal-header" onclick="toggleTerminal()">
+                    <span class="terminal-title">🖥️ Sync Terminal Output</span>
+                    <span class="terminal-toggle" id="terminalToggle">▼</span>
+                </div>
+                <div class="terminal-content" id="terminalContent" style="display: none;">
+                    <div class="terminal-output" id="terminalOutput">
+                        <div class="terminal-line">Terminal output will appear here when sync operations are running...</div>
+                    </div>
+                    <div class="terminal-controls">
+                        <button class="btn btn-secondary" onclick="clearTerminal()">Clear Output</button>
+                        <button class="btn btn-secondary" onclick="copyTerminal()">Copy Output</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Email Automation Management -->
+        <div class="email-panel">
+            <div class="panel-header">
+                <div class="panel-title">📧 Email Automation Management</div>
+                <button class="btn btn-chat" onclick="refreshEmailStatus()">Refresh</button>
+            </div>
+            <div class="email-content">
+                <div class="email-status">
+                    <h6>Email Status</h6>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <strong>Status:</strong> <span id="email-status">Unknown</span>
+                        </div>
+                        <div class="status-item">
+                            <strong>Last Check:</strong> <span id="last-email-check">Never</span>
+                        </div>
+                        <div class="status-item">
+                            <strong>Emails Processed:</strong> <span id="emails-processed">0</span>
+                        </div>
+                        <div class="status-item">
+                            <strong>Payments Processed:</strong> <span id="payments-processed">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="email-controls">
+                    <h6>Email Controls</h6>
+                    <div class="control-buttons">
+                        <button class="btn btn-success" onclick="checkEmails()">Check for New Emails</button>
+                        <button class="btn btn-info" onclick="checkEmailsYesterday()">Check Yesterday's Emails</button>
                     </div>
                 </div>
             </div>
@@ -455,11 +689,18 @@
             loadJobs();
             loadStats();
             loadSyncStatus();
+            loadDatabaseStats();
+            loadEmailStatus();
         });
 
         socket.on('disconnect', function() {
             document.getElementById('connectionStatus').className = 'status-indicator status-disconnected';
             document.getElementById('connectionText').textContent = 'Disconnected';
+        });
+
+        // Handle sync log messages
+        socket.on('sync_log', function(data) {
+            addTerminalLine(data.message, data.type);
         });
 
         // Real-time updates
@@ -507,21 +748,37 @@
                 return;
             }
 
-            jobList.innerHTML = jobs.map(job => `
-                <div class="job-item ${selectedJob && selectedJob.job_id === job.job_id ? 'selected' : ''}" 
-                     onclick="selectJob('${job.job_id}')">
-                    <div class="job-header">
-                        <span class="job-type">${job.job_type}</span>
-                        <span class="job-confidence">${Math.round(job.confidence * 100)}% confidence</span>
+            jobList.innerHTML = jobs.map(job => {
+                // Determine status badge
+                let statusBadge = '';
+                if (job.status === 'needs_review') {
+                    statusBadge = '<span class="status-badge needs-review">⚠️ Needs Review</span>';
+                } else if (job.status === 'completed') {
+                    statusBadge = '<span class="status-badge completed">✅ Completed</span>';
+                } else if (job.status === 'failed') {
+                    statusBadge = '<span class="status-badge failed">❌ Failed</span>';
+                } else if (job.status === 'skipped') {
+                    statusBadge = '<span class="status-badge skipped">⏭️ Skipped</span>';
+                }
+                
+                return `
+                    <div class="job-item ${selectedJob && selectedJob.job_id === job.job_id ? 'selected' : ''}" 
+                         onclick="selectJob('${job.job_id}')">
+                        <div class="job-header">
+                            <span class="job-type">${job.job_type}</span>
+                            <span class="job-confidence">${Math.round(job.confidence * 100)}% confidence</span>
+                            ${statusBadge}
+                        </div>
+                        <div class="job-reasoning">${job.reasoning.substring(0, 100)}...</div>
+                        <div class="job-actions">
+                            <button class="btn btn-success" onclick="applyPayment('${job.job_id}')" title="Apply payment to Xero">✅ Apply Payment</button>
+                            <button class="btn btn-warning" onclick="flagForReview('${job.job_id}')" title="Flag for manual review">⚠️ Flag for Review</button>
+                            <button class="btn btn-info" onclick="skipJob('${job.job_id}')" title="Skip this job">⏭️ Skip</button>
+                            <button class="btn btn-chat" onclick="selectJob('${job.job_id}')" title="Chat about this job">💬 Chat</button>
+                        </div>
                     </div>
-                    <div class="job-reasoning">${job.reasoning.substring(0, 100)}...</div>
-                    <div class="job-actions">
-                        <button class="btn btn-approve" onclick="approveJob('${job.job_id}')">Approve</button>
-                        <button class="btn btn-reject" onclick="rejectJob('${job.job_id}')">Reject</button>
-                        <button class="btn btn-chat" onclick="selectJob('${job.job_id}')">Chat</button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // Select a job for chat
@@ -538,6 +795,7 @@
             document.getElementById('selectedJobInfo').innerHTML = `
                 <strong>${selectedJob.job_type}</strong> - ${Math.round(selectedJob.confidence * 100)}% confidence
             `;
+            document.getElementById('clearSelectionBtn').style.display = 'inline-block';
             
             document.getElementById('chatInput').disabled = false;
             document.getElementById('chatInput').placeholder = 'Ask about this job...';
@@ -547,6 +805,35 @@
             
             // Join job room
             socket.emit('join_job', { job_id: jobId });
+        }
+
+        // Clear job selection and return to general chat
+        function clearJobSelection() {
+            selectedJob = null;
+            
+            // Update UI
+            document.querySelectorAll('.job-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Update chat panel
+            document.getElementById('selectedJobInfo').innerHTML = '';
+            document.getElementById('clearSelectionBtn').style.display = 'none';
+            
+            document.getElementById('chatInput').disabled = false;
+            document.getElementById('chatInput').placeholder = 'Ask me anything about the AI agent or jobs...';
+            
+            // Clear chat and show general welcome message
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="message ai">
+                    <div class="message-header">AI Agent</div>
+                    <div>Hello! I'm here to help you review jobs and answer questions. You can chat with me about anything related to the AI agent, jobs, or the system. Try asking me something!</div>
+                </div>
+            `;
+            
+            // Leave job room
+            socket.emit('leave_job', { job_id: selectedJob ? selectedJob.job_id : null });
         }
 
         // Load chat messages for selected job
@@ -583,7 +870,7 @@
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
             
-            if (!message || !selectedJob) return;
+            if (!message) return;
             
             // Add human message to chat
             const humanMessage = {
@@ -596,24 +883,48 @@
             addChatMessage(humanMessage);
             input.value = '';
             
-            // Send to server
-            fetch(`/api/jobs/${selectedJob.job_id}/chat`, {
+            // Send to server - either job-specific or general chat
+            const endpoint = selectedJob ? `/api/jobs/${selectedJob.job_id}/chat` : '/api/chat';
+            fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     sender: 'Human',
-                    message: message
+                    message: message,
+                    job_id: selectedJob ? selectedJob.job_id : null
                 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    const aiMessage = {
+                        id: Date.now() + 1,
+                        sender: 'AI Agent',
+                        message: data.response,
+                        timestamp: new Date().toISOString()
+                    };
+                    addChatMessage(aiMessage);
+                }
+            })
+            .catch(error => {
+                console.error('Chat error:', error);
+                const errorMessage = {
+                    id: Date.now() + 1,
+                    sender: 'System',
+                    message: 'Sorry, I encountered an error. Please try again.',
+                    timestamp: new Date().toISOString()
+                };
+                addChatMessage(errorMessage);
             });
         }
 
-        // Approve job
-        function approveJob(jobId) {
+        // Apply payment to Xero
+        function applyPayment(jobId) {
             const notes = prompt('Add notes (optional):');
             
-            fetch(`/api/jobs/${jobId}/approve`, {
+            fetch(`/api/jobs/${jobId}/apply-payment`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -626,19 +937,26 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    alert('✅ Payment applied successfully!');
                     loadJobs();
                     loadStats();
+                } else {
+                    alert('❌ Error applying payment: ' + (data.error || 'Unknown error'));
                 }
+            })
+            .catch(error => {
+                console.error('Error applying payment:', error);
+                alert('❌ Error applying payment');
             });
         }
 
-        // Reject job
-        function rejectJob(jobId) {
-            const notes = prompt('Add rejection reason:');
+        // Flag job for manual review
+        function flagForReview(jobId) {
+            const notes = prompt('Why does this need review?');
             
             if (!notes) return;
             
-            fetch(`/api/jobs/${jobId}/reject`, {
+            fetch(`/api/jobs/${jobId}/flag-for-review`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -651,9 +969,48 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    alert('⚠️ Job flagged for review');
                     loadJobs();
                     loadStats();
+                } else {
+                    alert('❌ Error flagging job: ' + (data.error || 'Unknown error'));
                 }
+            })
+            .catch(error => {
+                console.error('Error flagging job:', error);
+                alert('❌ Error flagging job');
+            });
+        }
+
+        // Skip this job
+        function skipJob(jobId) {
+            const notes = prompt('Why are you skipping this job? (e.g., duplicate payment)');
+            
+            if (!notes) return;
+            
+            fetch(`/api/jobs/${jobId}/skip`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    reviewer: 'Human Reviewer',
+                    notes: notes
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('⏭️ Job skipped');
+                    loadJobs();
+                    loadStats();
+                } else {
+                    alert('❌ Error skipping job: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error skipping job:', error);
+                alert('❌ Error skipping job');
             });
         }
 
@@ -690,7 +1047,78 @@
                 });
         }
         
+        function loadDatabaseStats() {
+            fetch('/api/database/stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Database stats error:', data.error);
+                        addTerminalLine('Database stats error: ' + data.error, 'error');
+                        return;
+                    }
+                    
+                    document.getElementById('db-invoices').textContent = data.invoices || 0;
+                    document.getElementById('db-unpaid').textContent = data.unpaid_invoices || 0;
+                    document.getElementById('db-paid').textContent = data.paid_invoices || 0;
+                    document.getElementById('db-payments').textContent = data.payments || 0;
+                    document.getElementById('db-unpaid-amount').textContent = `$${(data.total_unpaid_amount || 0).toLocaleString()}`;
+                    document.getElementById('db-tracking').textContent = data.payment_tracking || 0;
+                    
+                    addTerminalLine(`Database stats loaded: ${data.invoices} invoices, ${data.unpaid_invoices} unpaid, $${(data.total_unpaid_amount || 0).toLocaleString()} total unpaid`, 'info');
+                })
+                .catch(error => {
+                    console.error('Error loading database stats:', error);
+                    addTerminalLine('Error loading database stats: ' + error.message, 'error');
+                });
+        }
+
+        // Terminal functions
+        function toggleTerminal() {
+            const content = document.getElementById('terminalContent');
+            const toggle = document.getElementById('terminalToggle');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '▲';
+                toggle.style.transform = 'rotate(0deg)';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '▼';
+                toggle.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function addTerminalLine(message, type = 'info') {
+            const terminal = document.getElementById('terminalOutput');
+            const line = document.createElement('div');
+            line.className = `terminal-line ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            line.textContent = `[${timestamp}] ${message}`;
+            
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function clearTerminal() {
+            const terminal = document.getElementById('terminalOutput');
+            terminal.innerHTML = '<div class="terminal-line">Terminal output cleared...</div>';
+        }
+
+        function copyTerminal() {
+            const terminal = document.getElementById('terminalOutput');
+            const text = terminal.innerText;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                addTerminalLine('Terminal output copied to clipboard', 'success');
+            }).catch(() => {
+                addTerminalLine('Failed to copy terminal output', 'error');
+            });
+        }
+        
         function startSync() {
+            addTerminalLine('Starting background sync...', 'info');
+            
             fetch('/api/sync/start', {
                 method: 'POST',
                 headers: {
@@ -701,58 +1129,166 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    alert('Background sync started successfully!');
+                    addTerminalLine('Background sync started successfully!', 'success');
                     loadSyncStatus();
                 } else {
-                    alert('Error starting sync: ' + data.error);
+                    addTerminalLine('Error starting sync: ' + data.error, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error starting sync:', error);
-                alert('Error starting sync');
+                addTerminalLine('Error starting sync: ' + error.message, 'error');
             });
         }
         
         function stopSync() {
+            addTerminalLine('Stopping background sync...', 'info');
+            
             fetch('/api/sync/stop', {
                 method: 'POST'
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    alert('Background sync stopped successfully!');
+                    addTerminalLine('Background sync stopped successfully!', 'success');
                     loadSyncStatus();
                 } else {
-                    alert('Error stopping sync: ' + data.error);
+                    addTerminalLine('Error stopping sync: ' + data.error, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error stopping sync:', error);
-                alert('Error stopping sync');
+                addTerminalLine('Error stopping sync: ' + error.message, 'error');
             });
         }
         
+
+        
         function forceSync() {
+            const dateRange = document.getElementById('dateRange').value;
+            addTerminalLine(`Initiating force sync for last ${dateRange} days...`, 'info');
+            
             fetch('/api/sync/force', {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    date_range_days: parseInt(dateRange)
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    alert('Force sync initiated! Check status in a few moments.');
-                    setTimeout(loadSyncStatus, 3000); // Refresh status after 3 seconds
+                    addTerminalLine('Force sync initiated! Monitoring progress...', 'success');
+                    setTimeout(() => {
+                        loadSyncStatus();
+                        addTerminalLine('Force sync completed. Status updated.', 'info');
+                    }, 3000); // Refresh status after 3 seconds
                 } else {
-                    alert('Error forcing sync: ' + data.error);
+                    addTerminalLine('Error forcing sync: ' + data.error, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error forcing sync:', error);
-                alert('Error forcing sync');
+                addTerminalLine('Error forcing sync: ' + error.message, 'error');
             });
         }
         
         function refreshSyncStatus() {
             loadSyncStatus();
+            loadDatabaseStats();
+        }
+        
+        // Email automation functions
+        function loadEmailStatus() {
+            fetch('/api/email/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Email status error:', data.error);
+                        return;
+                    }
+                    
+                    document.getElementById('email-status').textContent = data.status || 'Unknown';
+                    document.getElementById('last-email-check').textContent = data.last_check || 'Never';
+                    document.getElementById('emails-processed').textContent = data.processed_count || 0;
+                    document.getElementById('payments-processed').textContent = data.payments_processed || 0;
+                })
+                .catch(error => {
+                    console.error('Error loading email status:', error);
+                });
+        }
+        
+        function checkEmails() {
+            // Set date range for email check (last 7 days by default)
+            const endDate = new Date().toISOString().split('T')[0];
+            const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            
+            fetch('/api/email/check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_date: startDate,
+                    end_date: endDate,
+                    check_unprocessed_only: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const result = data.result;
+                    alert(`Email check completed!\n\nEmails processed: ${result.emails_processed}\nPayments processed: ${result.payments_processed}\nTotal payments found: ${result.total_payments_found}`);
+                    loadEmailStatus();
+                    loadJobs(); // Refresh jobs list
+                } else {
+                    alert('Error checking emails: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking emails:', error);
+                alert('Error checking emails');
+            });
+        }
+        
+        function checkEmailsYesterday() {
+            // Check specifically for yesterday's emails
+            const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const startDate = yesterday.toISOString().split('T')[0];
+            const endDate = yesterday.toISOString().split('T')[0];
+            
+            fetch('/api/email/check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_date: startDate,
+                    end_date: endDate,
+                    check_unprocessed_only: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const result = data.result;
+                    alert(`Yesterday's email check completed!\n\nEmails processed: ${result.emails_processed}\nPayments processed: ${result.payments_processed}\nTotal payments found: ${result.total_payments_found}`);
+                    loadEmailStatus();
+                    loadJobs(); // Refresh jobs list
+                } else {
+                    alert('Error checking yesterday\'s emails: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking yesterday\'s emails:', error);
+                alert('Error checking yesterday\'s emails');
+            });
+        }
+        
+        function refreshEmailStatus() {
+            loadEmailStatus();
         }
 
         // Update stats

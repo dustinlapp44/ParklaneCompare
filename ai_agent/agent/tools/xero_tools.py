@@ -143,12 +143,21 @@ class XeroInvoiceTool(BaseTool):
             with open(test_data_path, 'r') as f:
                 mock_data = json.load(f)
             
-            # Filter mock invoices by contact name
-            filtered_invoices = [
-                inv for inv in mock_data['invoices']
-                if inv.get('ContactName', '').lower() == contact_name.lower()
-            ]
+            logger.info(f"Loaded {len(mock_data.get('invoices', []))} invoices from mock data")
+            
+            # Filter mock invoices by contact name (if provided)
+            if contact_name:
+                filtered_invoices = [
+                    inv for inv in mock_data['invoices']
+                    if inv.get('ContactName', '').lower() == contact_name.lower()
+                ]
+                logger.info(f"Filtered to {len(filtered_invoices)} invoices for contact '{contact_name}'")
+            else:
+                # Return all invoices if no contact name provided
+                filtered_invoices = mock_data.get('invoices', [])
+                logger.info(f"Returning all {len(filtered_invoices)} invoices (no contact filter)")
         else:
+            logger.warning(f"Mock data file not found at {test_data_path}")
             filtered_invoices = []
         
         return {

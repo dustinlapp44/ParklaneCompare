@@ -50,25 +50,31 @@ def upsert_invoices(invoices):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     for inv in invoices:
-        if inv['Payments']:
-            pass
+        # Check if Payments key exists before accessing it
+        payments = inv.get('Payments', [])
        
+        # Handle different contact name formats
+        contact_name = inv.get('ContactName') or inv.get('Contact', {}).get('Name', 'Unknown')
+        
+        # Handle different date formats
+        issue_date = inv.get('DateString') or inv.get('Date') or inv.get('UpdatedDateUTC', '')
+        due_date = inv.get('DueDateString') or inv.get('DueDate') or inv.get('UpdatedDateUTC', '')
+        
         c.execute('''
             INSERT OR REPLACE INTO invoices
             (invoice_id, contact_name, reference, amount_due, status, issue_date, due_date)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
             inv['InvoiceID'],
-            inv['Contact']['Name'],
+            contact_name,
             inv.get('Reference', ''),
             inv['AmountDue'],
             inv['Status'],
-            inv['DateString'] if 'DateString' in inv else inv['UpdatedDateUTC'],
-            inv['DueDateString'] if 'DueDateString' in inv else inv['UpdatedDateUTC']
-            
+            issue_date,
+            due_date
         ))
         # Handle payments
-        for payment in inv.get('Payments', []):
+        for payment in payments:
             c.execute('''
                 INSERT OR REPLACE INTO payments (
                     payment_id,
