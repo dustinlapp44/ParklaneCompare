@@ -103,12 +103,12 @@ def process_payments(start_date=None, end_date=None):
 if __name__ == "__main__":
 
     invoice_start_date = "2025-05-01"
-    invoice_end_date = "2025-08-12"
+    invoice_end_date = "2025-08-14"
     refresh_invoice_cache(invoice_start_date, invoice_end_date)
 
-    payment_start_date = "2025-08-09"
-    payment_end_date = "2025-08-12"
-    process_payments(payment_start_date, payment_end_date)
+    email_start_date = "2025-08-14"
+    email_end_date = "2025-08-14"
+    process_payments(email_start_date, email_end_date)
 
     
         

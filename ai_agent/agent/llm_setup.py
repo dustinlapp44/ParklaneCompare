@@ -24,13 +24,13 @@ logger = logging.getLogger(__name__)
 class LLMSetup:
     """Setup and manage LLM connections"""
     
-    def __init__(self, base_url: str = "http://localhost:11434", model_name: str = "llama3.2"):
+    def __init__(self, base_url: str = "http://192.168.86.53:11434", model_name: str = "llama3:latest"):
         """
         Initialize LLM setup
         
         Args:
-            base_url: Ollama server URL (default: localhost:11434)
-            model_name: Model name to use (default: llama3.2)
+            base_url: Ollama server URL (default: 192.168.86.53:11434)
+            model_name: Model name to use (default: llama3:latest)
         """
         self.base_url = base_url
         self.model_name = model_name
@@ -217,8 +217,8 @@ class LLMSetup:
             "timestamp": datetime.now().isoformat()
         }
 
-def setup_llm_for_agent(base_url: str = "http://localhost:11434", 
-                       model_name: str = "llama3.2",
+def setup_llm_for_agent(base_url: str = "http://192.168.86.53:11434", 
+                       model_name: str = "llama3:latest",
                        temperature: float = 0.1) -> Optional[Ollama]:
     """
     Setup LLM for the AI agent
@@ -282,14 +282,22 @@ if __name__ == "__main__":
         else:
             print(f"Failed to get models: {models_result['error']}")
         
-        # Test reasoning
-        print("\n3. Testing reasoning capabilities...")
-        reasoning_result = llm_setup.test_reasoning_capabilities()
-        if reasoning_result['success']:
-            print("✅ Reasoning test passed")
-            print("Response preview:", reasoning_result['response'][:100] + "...")
+        # Initialize LLM
+        print("\n3. Initializing LLM...")
+        llm = llm_setup.initialize_llm(temperature=0.1)
+        if llm:
+            print("✅ LLM initialized successfully")
+            
+            # Test reasoning
+            print("\n4. Testing reasoning capabilities...")
+            reasoning_result = llm_setup.test_reasoning_capabilities()
+            if reasoning_result['success']:
+                print("✅ Reasoning test passed")
+                print("Response preview:", reasoning_result['response'][:100] + "...")
+            else:
+                print(f"❌ Reasoning test failed: {reasoning_result['error']}")
         else:
-            print(f"❌ Reasoning test failed: {reasoning_result['error']}")
+            print("❌ LLM initialization failed")
     
     print("\n" + "=" * 50)
     print("LLM Setup Test Complete")

@@ -41,10 +41,13 @@ class SyncManager:
             
             # Initialize the main database tables
             payments_db.init_db()
-            self.logger.info("Database tables initialized successfully")
+            self.logger.info("Main database tables initialized successfully")
             
             # Initialize sync log table
             self._init_sync_log()
+            
+            # Verify all tables exist
+            self._verify_tables_exist()
             
         except Exception as e:
             self.logger.error(f"Failed to initialize database: {e}")
@@ -98,6 +101,84 @@ class SyncManager:
                 
         except Exception as e:
             self.logger.error(f"Failed to create tables manually: {e}")
+    
+    def _verify_tables_exist(self):
+        """Verify that all required tables exist"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                # Check for required tables
+                required_tables = ['invoices', 'payments', 'sync_log']
+                existing_tables = []
+                
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                tables = cursor.fetchall()
+                existing_tables = [table[0] for table in tables]
+                
+                missing_tables = [table for table in required_tables if table not in existing_tables]
+                
+                if missing_tables:
+                    self.logger.warning(f"Missing tables: {missing_tables}")
+                    # Try to create missing tables
+                    self._create_missing_tables(missing_tables)
+                else:
+                    self.logger.info("All required tables verified successfully")
+                    
+        except Exception as e:
+            self.logger.error(f"Error verifying tables: {e}")
+    
+    def _create_missing_tables(self, missing_tables):
+        """Create any missing tables"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                for table in missing_tables:
+                    if table == 'invoices':
+                        conn.execute('''
+                            CREATE TABLE IF NOT EXISTS invoices (
+                                invoice_id TEXT PRIMARY KEY,
+                                contact_name TEXT,
+                                reference TEXT,
+                                amount_due REAL,
+                                status TEXT,
+                                issue_date TEXT,
+                                due_date TEXT
+                            )
+                        ''')
+                    elif table == 'payments':
+                        conn.execute('''
+                            CREATE TABLE IF NOT EXISTS payments (
+                                payment_id TEXT PRIMARY KEY,
+                                invoice_id TEXT,
+                                amount REAL,
+                                date TEXT,
+                                reference TEXT,
+                                bank_transaction_id TEXT,
+                                status TEXT,
+                                FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id)
+                            )
+                        ''')
+                    elif table == 'sync_log':
+                        conn.execute("""
+                            CREATE TABLE IF NOT EXISTS sync_log (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                sync_type TEXT NOT NULL,
+                                start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                end_time TIMESTAMP,
+                                status TEXT NOT NULL,
+                                records_processed INTEGER DEFAULT 0,
+                                records_added INTEGER DEFAULT 0,
+                                records_updated INTEGER DEFAULT 0,
+                                errors TEXT,
+                                details TEXT
+                            )
+                        """)
+                
+                conn.commit()
+                self.logger.info(f"Created missing tables: {missing_tables}")
+                
+        except Exception as e:
+            self.logger.error(f"Error creating missing tables: {e}")
     
     def _init_sync_log(self):
         """Initialize the sync_log table if it doesn't exist."""
@@ -437,6 +518,9 @@ class SyncManager:
             emit_sync_log(f"🚀 Force sync requested by user for last {date_range_days} days", "info")
         except ImportError:
             self.logger.info(f"🚀 Force sync requested by user for last {date_range_days} days")
+        
+        # Ensure database is properly initialized before syncing
+        self._init_database()
         self._perform_sync(date_range_days=date_range_days)
     
     def check_payment_invoice_relationship(self, payment_data: Dict[str, Any]) -> Dict[str, Any]:

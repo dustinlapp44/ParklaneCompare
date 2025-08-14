@@ -93,11 +93,19 @@ def fetch_aptexx_emails(start_date=None, end_date=None):
     
     query_parts = ["from:customerservice@aptx.cm", "subject:'Payment Summary'"]
     if start_date:
-        query_parts.append(f"after:{start_date}")  # YYYY/MM/DD
+        # Convert YYYY-MM-DD to YYYY/MM/DD for Gmail
+        gmail_start = start_date.replace('-', '/')
+        query_parts.append(f"after:{gmail_start}")
     if end_date:
-        query_parts.append(f"before:{end_date}")
+        # Gmail 'before' is exclusive, so add 1 day to include the end date
+        from datetime import datetime, timedelta
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+        adjusted_end = (end_dt + timedelta(days=1)).strftime('%Y/%m/%d')
+        query_parts.append(f"before:{adjusted_end}")
         
     query = " ".join(query_parts)
+    
+    print(f"🔍 Gmail Query: {query}")
     
     results = service.users().messages().list(userId='me', q=query).execute()
     messages = results.get('messages', [])

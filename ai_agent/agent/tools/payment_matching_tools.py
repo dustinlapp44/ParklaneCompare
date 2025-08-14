@@ -75,7 +75,7 @@ class PaymentMatchingTool(BaseTool):
     def _run(self, payment: Dict[str, Any], tenant_name: str, amount: float,
              payment_date: str, reference: str, property_name: str) -> Dict[str, Any]:
         """
-        Match payment to invoice using hybrid approach
+        Match payment to invoice using hybrid approach with AI reasoning
         
         Args:
             payment: Payment data from parsed email
@@ -91,44 +91,60 @@ class PaymentMatchingTool(BaseTool):
         logger.info(f"Matching payment ${amount} for {tenant_name} at {property_name}")
         
         try:
-            # Step 0: Check for duplicate payments
-            if self._is_duplicate_payment(reference, amount, tenant_name):
+            # Step 0: Check detailed payment status
+            payment_status = self._check_payment_status(reference, tenant_name)
+            
+            # If payment already exists, skip it
+            if payment_status['payment_exists']:
                 return self._create_duplicate_result(
-                    f"Payment reference {reference} already processed for {tenant_name}",
-                    recommendations=["Skip this payment", "Verify if this is a new payment"]
+                    f"Payment reference {reference} already applied to an invoice - skipping",
+                    recommendations=["Payment already applied", "No action needed"]
                 )
             
             # Step 1: Get available invoices from database
             invoices = self._get_tenant_invoices(tenant_name)
             
-            if not invoices:
-                # This is the key scenario: payment arrived before invoice
+            # Determine the scenario based on payment status
+            if not payment_status['invoice_exists']:
+                # No invoices exist for this tenant
                 return self._create_no_match_result(
-                    f"No invoice found for tenant: {tenant_name}. Payment may have arrived before invoice creation.",
+                    f"No invoices found for tenant: {tenant_name}. Payment may be for a future invoice.",
                     recommendations=[
                         "Flag for human review - invoice may need to be created in Xero",
                         "This is normal business flow - payments can arrive before invoices",
-                        "Do not trigger database sync for this scenario"
+                        "Future: Agent could create invoice automatically"
+                    ]
+                )
+            elif payment_status['all_invoices_paid']:
+                # All existing invoices are paid, but this payment reference is new
+                return self._create_no_match_result(
+                    f"All existing invoices for {tenant_name} are paid, but payment reference {reference} is new.",
+                    recommendations=[
+                        "Payment may be for a future invoice (not yet created)",
+                        "Payment may be a prepayment for next month",
+                        "Flag for human review - may need to create new invoice",
+                        "Future: Agent could create invoice automatically"
                     ]
                 )
             
             # Step 2: Algorithmic matching
             algorithmic_result = self._algorithmic_matching(invoices, amount, tenant_name, payment_date)
             
-            # Step 3: Handle different match scenarios
-            if algorithmic_result["match_type"] == "exact":
+            # Step 3: Apply confidence-based logic with AI reasoning
+            confidence = algorithmic_result.get("confidence_score", 0.0)
+            
+            if confidence >= 0.9:
+                # High confidence - create job with high confidence for human approval
+                logger.info(f"High confidence match ({confidence:.2f}) - creating job for human approval")
                 return algorithmic_result
-            elif algorithmic_result["match_type"] == "multiple":
-                return self._handle_multiple_invoices(algorithmic_result, payment, tenant_name, amount)
-            elif algorithmic_result["match_type"] == "overpayment":
-                return self._handle_overpayment(algorithmic_result, payment, tenant_name, amount)
-            elif algorithmic_result["match_type"] == "fuzzy":
-                return self._validate_fuzzy_match(algorithmic_result, payment, tenant_name, amount)
+            elif confidence >= 0.7:
+                # Medium confidence - use AI reasoning to improve job quality
+                logger.info(f"Medium confidence match ({confidence:.2f}) - using AI reasoning to improve job quality")
+                return self._apply_ai_reasoning(algorithmic_result, payment, tenant_name, amount, invoices)
             else:
-                return self._create_no_match_result(
-                    "No algorithmic match found",
-                    recommendations=["Use AI reasoning", "Flag for human review"]
-                )
+                # Low confidence - use AI reasoning to provide better insights for human review
+                logger.info(f"Low confidence match ({confidence:.2f}) - using AI reasoning for better insights")
+                return self._apply_ai_reasoning(algorithmic_result, payment, tenant_name, amount, invoices)
                 
         except Exception as e:
             logger.error(f"Error in payment matching: {str(e)}")
@@ -155,19 +171,22 @@ class PaymentMatchingTool(BaseTool):
         try:
             from Payments.payments_db import get_invoices_by_contact
             
+            # Normalize tenant name by removing extra spaces
+            normalized_tenant_name = " ".join(tenant_name.split())
+            
             # Get invoices from local database
-            invoices = get_invoices_by_contact(tenant_name)
+            invoices = get_invoices_by_contact(normalized_tenant_name)
             
             # Convert to expected format
             formatted_invoices = []
             for inv in invoices:
                 formatted_invoices.append({
-                    'InvoiceID': inv[0],  # invoice_id
-                    'ContactName': inv[1],  # contact_name
-                    'AmountDue': inv[3],  # amount_due
-                    'Date': inv[5],  # issue_date
-                    'Status': inv[4],  # status
-                    'Reference': inv[2]  # reference
+                    'InvoiceID': inv['invoice_id'],
+                    'ContactName': inv['contact_name'],
+                    'AmountDue': inv['amount_due'],
+                    'Date': inv['issue_date'],
+                    'Status': inv['status'],
+                    'Reference': inv['reference']
                 })
             
             return formatted_invoices
@@ -313,6 +332,99 @@ class PaymentMatchingTool(BaseTool):
         
         return result
     
+    def _apply_ai_reasoning(self, algorithmic_result: Dict[str, Any], payment: Dict[str, Any], 
+                           tenant_name: str, amount: float, invoices: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Apply AI reasoning to improve job quality and provide better insights for human review.
+        Does NOT auto-apply payments - only improves reasoning and confidence.
+        """
+        try:
+            # Import AI reasoning tool
+            from .ai_reasoning_tools import AIReasoningTool
+            
+            ai_tool = AIReasoningTool()
+            
+            # Determine scenario type based on algorithmic result
+            scenario_type = self._determine_scenario_type(algorithmic_result, payment, invoices)
+            
+            # Prepare context for AI reasoning
+            context = {
+                'payment_amount': amount,
+                'payment_date': payment.get('date', ''),
+                'payment_reference': payment.get('ref', ''),
+                'property_name': payment.get('property', ''),
+                'algorithmic_confidence': algorithmic_result.get('confidence_score', 0.0),
+                'algorithmic_reasoning': algorithmic_result.get('reasoning', ''),
+                'match_type': algorithmic_result.get('match_type', '')
+            }
+            
+            # Use AI reasoning to improve the result
+            ai_result = ai_tool._run(
+                scenario_type=scenario_type,
+                payment_data=payment,
+                available_invoices=invoices,
+                tenant_matches=[{'name': tenant_name, 'confidence': 1.0}],
+                context=context
+            )
+            
+            if ai_result.get('success', False):
+                # AI reasoning succeeded - enhance the result
+                enhanced_result = algorithmic_result.copy()
+                
+                # Improve reasoning with AI insights
+                ai_reasoning = ai_result.get('reasoning', '')
+                enhanced_result['reasoning'] = f"{algorithmic_result.get('reasoning', '')} AI Analysis: {ai_reasoning}"
+                
+                # Adjust confidence based on AI analysis
+                ai_confidence = ai_result.get('confidence_score', 0.0)
+                original_confidence = algorithmic_result.get('confidence_score', 0.0)
+                
+                # Use AI confidence if it's higher, otherwise keep original
+                if ai_confidence > original_confidence:
+                    enhanced_result['confidence_score'] = ai_confidence
+                    enhanced_result['reasoning'] += f" (AI confidence: {ai_confidence:.2f})"
+                
+                # Add AI recommendations
+                ai_recommendations = ai_result.get('recommendations', [])
+                enhanced_result['recommendations'].extend(ai_recommendations)
+                
+                # Add AI insights to warnings
+                ai_insights = ai_result.get('insights', [])
+                if ai_insights:
+                    enhanced_result['warnings'] = enhanced_result.get('warnings', []) + ai_insights
+                
+                logger.info(f"AI reasoning applied successfully - confidence: {enhanced_result['confidence_score']:.2f}")
+                return enhanced_result
+            else:
+                # AI reasoning failed - return original result with note
+                algorithmic_result['reasoning'] += " (AI reasoning unavailable - using algorithmic result)"
+                algorithmic_result['recommendations'].append("AI reasoning failed - human review recommended")
+                logger.warning(f"AI reasoning failed: {ai_result.get('error', 'Unknown error')}")
+                return algorithmic_result
+                
+        except Exception as e:
+            logger.error(f"Error applying AI reasoning: {e}")
+            # Return original result with error note
+            algorithmic_result['reasoning'] += " (AI reasoning error - using algorithmic result)"
+            algorithmic_result['recommendations'].append("AI reasoning error - human review recommended")
+            return algorithmic_result
+    
+    def _determine_scenario_type(self, algorithmic_result: Dict[str, Any], payment: Dict[str, Any], 
+                                invoices: List[Dict[str, Any]]) -> str:
+        """Determine the scenario type for AI reasoning"""
+        match_type = algorithmic_result.get('match_type', '')
+        
+        if match_type == 'multiple':
+            return 'multiple_invoices'
+        elif match_type == 'overpayment':
+            return 'overpayment'
+        elif match_type == 'fuzzy':
+            return 'name_ambiguity'
+        elif match_type == 'partial':
+            return 'partial_match'
+        else:
+            return 'general_scenario'
+    
     def _create_match_result(self, invoice: Optional[Dict[str, Any]], confidence_score: float, 
                            match_type: str, reasoning: str, warnings: List[str] = None) -> Dict[str, Any]:
         """Create a match result"""
@@ -329,27 +441,100 @@ class PaymentMatchingTool(BaseTool):
         }
     
     def _is_duplicate_payment(self, reference: str, amount: float, tenant_name: str) -> bool:
-        """Check if payment has already been processed"""
+        """Check if payment reference is already linked to an invoice"""
         try:
             import sqlite3
             
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            # Check payment_tracking table
+            # Check for exact match first
             cursor.execute('''
-                SELECT COUNT(*) FROM payment_tracking 
-                WHERE reference = ? AND amount = ?
-            ''', (reference, amount))
+                SELECT COUNT(*) FROM payments 
+                WHERE reference = ?
+            ''', (reference,))
+            
+            count = cursor.fetchone()[0]
+            
+            if count > 0:
+                logger.info(f"Payment reference {reference} already exists in payments table - skipping")
+                conn.close()
+                return True
+            
+            # Check for "Aptexx" prefixed version (email parsing vs Xero storage format)
+            aptexx_reference = f"Aptexx {reference}"
+            cursor.execute('''
+                SELECT COUNT(*) FROM payments 
+                WHERE reference = ?
+            ''', (aptexx_reference,))
             
             count = cursor.fetchone()[0]
             conn.close()
             
-            return count > 0
+            if count > 0:
+                logger.info(f"Payment reference {aptexx_reference} already exists in payments table - skipping")
+                return True
+            
+            return False
             
         except Exception as e:
             logger.warning(f"Error checking duplicate payment: {e}")
             return False
+    
+    def _check_payment_status(self, reference: str, tenant_name: str) -> Dict[str, Any]:
+        """Check detailed payment status for better decision making"""
+        try:
+            import sqlite3
+            
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            result = {
+                'payment_exists': False,
+                'invoice_exists': False,
+                'all_invoices_paid': False,
+                'unpaid_invoices': 0,
+                'total_invoices': 0
+            }
+            
+            # Check if payment reference already exists (both formats)
+            cursor.execute('''
+                SELECT COUNT(*) FROM payments 
+                WHERE reference = ? OR reference = ?
+            ''', (reference, f"Aptexx {reference}"))
+            
+            result['payment_exists'] = cursor.fetchone()[0] > 0
+            
+            # Normalize tenant name by removing extra spaces
+            normalized_tenant_name = " ".join(tenant_name.split())
+            
+            # Check tenant invoices
+            cursor.execute('''
+                SELECT COUNT(*), 
+                       SUM(CASE WHEN amount_due > 0 THEN 1 ELSE 0 END),
+                       SUM(CASE WHEN status = 'PAID' THEN 1 ELSE 0 END)
+                FROM invoices 
+                WHERE contact_name LIKE ?
+            ''', (f'%{normalized_tenant_name}%',))
+            
+            row = cursor.fetchone()
+            result['total_invoices'] = row[0] or 0
+            result['unpaid_invoices'] = row[1] or 0
+            result['all_invoices_paid'] = (row[2] or 0) == result['total_invoices']
+            result['invoice_exists'] = result['total_invoices'] > 0
+            
+            conn.close()
+            return result
+            
+        except Exception as e:
+            logger.warning(f"Error checking payment status: {e}")
+            return {
+                'payment_exists': False,
+                'invoice_exists': False,
+                'all_invoices_paid': False,
+                'unpaid_invoices': 0,
+                'total_invoices': 0
+            }
     
     def _create_duplicate_result(self, reasoning: str, recommendations: List[str] = None) -> Dict[str, Any]:
         """Create a duplicate payment result"""
