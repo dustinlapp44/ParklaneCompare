@@ -57,7 +57,7 @@ def convert_hours_to_float(df: pd.DataFrame) -> pd.DataFrame:
     def time_to_float(t):
         if isinstance(t, str) and ':' in t:
             h, m = t.split(':')
-            return round(int(h) + int(m)/60.0, 2)
+            return round(int(h) + int(m)/60.0, 4)
         return t
 
     for col in df.columns:
