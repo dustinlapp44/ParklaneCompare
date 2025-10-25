@@ -448,7 +448,7 @@ HTML_TEMPLATE = """
         }
         
         function formatColumnName(column) {
-            return column.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            return column.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase());
         }
         
         function escapeHtml(text) {

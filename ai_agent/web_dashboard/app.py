@@ -20,15 +20,82 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 import threading
 import time
 
-# Import AI agent components
+# Import AI agent components (lazy loading)
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from agent.core_agent import PropertyManagementAgent
-from agent.llm_setup import setup_llm_for_agent
-from sync_manager import get_sync_manager, start_sync_manager, stop_sync_manager
-from utils.logger import get_agent_logger
-from utils.logging_decorators import log_human_interaction
+
+# Lazy imports for AI components - only load when needed
+agent = None
+llm = None
+
+def get_ai_components():
+    """Lazy load AI components only when needed"""
+    global agent, llm
+    
+    if agent is None:
+        try:
+            from agent.core_agent import PropertyManagementAgent
+            from agent.llm_setup import setup_llm_for_agent
+            from sync_manager import get_sync_manager, start_sync_manager, stop_sync_manager
+            from utils.logger import get_agent_logger
+            from utils.logging_decorators import log_human_interaction
+            
+            # Initialize AI components
+            print("🤖 Loading AI components...")
+            llm = setup_llm_for_agent(
+                base_url="http://192.168.86.53:11434",
+                model_name="llama3:latest",
+                temperature=0.1
+            )
+            
+            if llm:
+                agent = PropertyManagementAgent(verbose=False)
+                agent.set_llm(llm)
+                print("✅ AI components loaded successfully")
+            else:
+                print("❌ Failed to load AI components - check Ollama server")
+                
+        except Exception as e:
+            print(f"❌ Error loading AI components: {e}")
+            agent = None
+            llm = None
+    
+    return agent, llm
+
+# Initialize logger (this doesn't require AI components)
+try:
+    from utils.logger import get_agent_logger
+    from utils.logging_decorators import log_human_interaction
+    agent_logger = get_agent_logger()
+except ImportError:
+    # Fallback logger if utils.logger is not available
+    import logging
+    agent_logger = logging.getLogger(__name__)
+    agent_logger.setLevel(logging.INFO)
+    
+    # Add fallback methods for custom logging
+    def log_human_interaction_method(self, interaction_type, user_id, job_id, action, details):
+        logging.info(f"Human interaction: {interaction_type} by {user_id} on job {job_id} - {action}")
+    
+    def log_financial_operation(self, operation_type, amount, currency, details):
+        logging.info(f"Financial operation: {operation_type} - {amount} {currency}")
+    
+    # Add methods to the logger object
+    agent_logger.log_human_interaction = log_human_interaction_method.__get__(agent_logger)
+    agent_logger.log_financial_operation = log_financial_operation.__get__(agent_logger)
+    
+    # Create a fallback decorator
+    def log_human_interaction(interaction_type):
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    logging.error(f"Error in {func.__name__}: {e}")
+                    raise
+            return wrapper
+        return decorator
 
 # Response template system
 class ResponseTemplate:
@@ -130,7 +197,6 @@ llm = None
 pending_jobs = []
 job_history = []
 chat_messages = []
-agent_logger = get_agent_logger()
 
 # Load sample jobs for testing
 def load_sample_jobs():
@@ -960,6 +1026,9 @@ def repair_database():
 def get_agent_status():
     """Get AI agent status"""
     try:
+        # Try to get AI components (lazy loading)
+        agent, llm = get_ai_components()
+        
         status = {
             'agent_initialized': agent is not None,
             'llm_initialized': llm is not None,
@@ -980,6 +1049,114 @@ def initialize_agent_endpoint():
             'message': 'Agent initialization completed',
             'agent_ready': agent is not None and agent.agent_executor is not None
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/invoice-reconciliation')
+def invoice_reconciliation_page():
+    """Invoice reconciliation page"""
+    return render_template('invoice_reconciliation.html')
+
+@app.route('/api/invoice-reconciliation/run', methods=['POST'])
+def run_invoice_reconciliation():
+    """Run the invoice reconciliation pipeline"""
+    try:
+        # Check if pipeline is already running
+        if hasattr(app, 'invoice_pipeline_running') and app.invoice_pipeline_running:
+            return jsonify({'error': 'Pipeline is already running'}), 400
+        
+        # Set pipeline as running
+        app.invoice_pipeline_running = True
+        
+        # Start pipeline in background thread
+        def run_pipeline():
+            try:
+                import time
+                import sys
+                import io
+                from datetime import datetime
+                from contextlib import redirect_stdout, redirect_stderr
+                
+                # Emit start event
+                socketio.emit('invoice_reconciliation_start', {
+                    'start_date': '2024-01-01',
+                    'end_date': datetime.now().strftime('%Y-%m-%d')
+                })
+                
+                # Add project root to path for imports
+                import os
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                if project_root not in sys.path:
+                    sys.path.append(project_root)
+                
+                # Create a custom output capture class
+                class OutputCapture:
+                    def __init__(self):
+                        self.buffer = []
+                    
+                    def write(self, text):
+                        if text.strip():  # Only emit non-empty lines
+                            self.buffer.append(text)
+                            # Emit to web interface
+                            socketio.emit('invoice_reconciliation_progress', {
+                                'message': text.strip(),
+                                'progress': None  # No specific progress, just output
+                            })
+                    
+                    def flush(self):
+                        pass
+                
+                # Capture stdout and stderr
+                output_capture = OutputCapture()
+                
+                with redirect_stdout(output_capture), redirect_stderr(output_capture):
+                    # Emit progress updates
+                    socketio.emit('invoice_reconciliation_progress', {
+                        'message': 'Starting data pull from Google Drive and Xero...',
+                        'progress': 10
+                    })
+                    
+                    # Import and run the pipeline
+                    from Compare.main import run_full_pipeline
+                    
+                    # Run the pipeline
+                    run_full_pipeline()
+                
+                # Emit completion
+                socketio.emit('invoice_reconciliation_complete', {
+                    'properties_processed': 0  # We'll get this from the output if needed
+                })
+                
+            except Exception as e:
+                # Emit error
+                socketio.emit('invoice_reconciliation_error', {
+                    'error': str(e)
+                })
+                logging.error(f"Invoice reconciliation error: {e}")
+            finally:
+                # Mark pipeline as not running
+                app.invoice_pipeline_running = False
+        
+        # Start the pipeline thread
+        import threading
+        thread = threading.Thread(target=run_pipeline, daemon=True)
+        thread.start()
+        
+        return jsonify({'status': 'success', 'message': 'Pipeline started'})
+        
+    except Exception as e:
+        app.invoice_pipeline_running = False
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/invoice-reconciliation/stop', methods=['POST'])
+def stop_invoice_reconciliation():
+    """Stop the invoice reconciliation pipeline"""
+    try:
+        if hasattr(app, 'invoice_pipeline_running') and app.invoice_pipeline_running:
+            app.invoice_pipeline_running = False
+            return jsonify({'success': True, 'message': 'Pipeline stop requested'})
+        else:
+            return jsonify({'error': 'No pipeline is currently running'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -1069,6 +1246,9 @@ def emit_email_log(message: str, log_type: str = "info"):
 def get_ai_response(job: Optional[Job], human_message: str) -> Optional[str]:
     """Get AI response to human chat message using LLM with formatted templates"""
     try:
+        # Try to get AI components (lazy loading)
+        agent, llm = get_ai_components()
+        
         # Check if LLM is available
         llm_available = agent and agent.agent_executor and llm
         logging.info(f"LLM available: {llm_available}, Agent: {agent is not None}, Executor: {agent.agent_executor is not None if agent else False}, LLM: {llm is not None}")
@@ -1076,7 +1256,7 @@ def get_ai_response(job: Optional[Job], human_message: str) -> Optional[str]:
         # First, try to use the LLM if available
         if llm_available:
             logging.info("Using LLM for response generation")
-            return _get_llm_response(job, human_message)
+            return _get_llm_response(job, human_message, agent, llm)
         else:
             # Fall back to template responses if LLM not available
             logging.info("Using template fallback responses")
@@ -1088,7 +1268,7 @@ def get_ai_response(job: Optional[Job], human_message: str) -> Optional[str]:
         logging.error(f"Error getting AI response: {e}")
         return "I'm having trouble processing your question right now. Please try again."
 
-def _get_llm_response(job: Optional[Job], human_message: str) -> str:
+def _get_llm_response(job: Optional[Job], human_message: str, agent, llm) -> str:
     """Get response from LLM with proper formatting"""
     try:
         if job:
@@ -1262,26 +1442,9 @@ def _format_job_details(job: Job) -> str:
 
 def initialize_agent():
     """Initialize the AI agent"""
-    global agent, llm
-    
     try:
-        print("🤖 Initializing AI Agent...")
-        
-        # Setup LLM with better error handling
-        print("📡 Connecting to Ollama server...")
-        llm = setup_llm_for_agent(
-            base_url="http://192.168.86.53:11434",
-            model_name="llama3:latest",
-            temperature=0.1
-        )
-        
-        if llm:
-            print("✅ LLM initialized successfully")
-            
-            # Initialize agent
-            print("🤖 Creating PropertyManagementAgent...")
-            agent = PropertyManagementAgent(verbose=False)
-            agent.set_llm(llm)
+        agent, llm = get_ai_components()
+        if agent and llm:
             print("✅ AI Agent initialized successfully")
             
             # Test the agent
@@ -1291,9 +1454,8 @@ def initialize_agent():
                 print(f"✅ Agent test successful: {str(test_response)[:100]}...")
             except Exception as test_error:
                 print(f"⚠️ Agent test failed: {test_error}")
-                
         else:
-            print("❌ Failed to initialize LLM - check Ollama server")
+            print("❌ Failed to initialize AI Agent")
             
     except Exception as e:
         print(f"❌ Error initializing agent: {e}")
@@ -1329,16 +1491,9 @@ def handle_leave_job(data):
         emit('left_job', {'job_id': job_id})
 
 if __name__ == '__main__':
-    # Initialize agent in background thread with delay
-    def init_agent_thread():
-        time.sleep(5)  # Wait 5 seconds before initializing agent
-        initialize_agent()
-    
-    threading.Thread(target=init_agent_thread, daemon=True).start()
-    
     print("🚀 Starting AI Agent Dashboard...")
     print("📊 Dashboard will be available at: http://localhost:5000")
-    print("🤖 AI Agent will initialize in the background...")
+    print("🤖 AI Agent will be loaded on-demand when needed...")
     
     # Run the web server
     socketio.run(app, host='0.0.0.0', port=5000, debug=False)  # Disable debug mode for better performance

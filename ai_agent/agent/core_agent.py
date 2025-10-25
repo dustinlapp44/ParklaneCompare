@@ -17,7 +17,7 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from langchain.agents import AgentExecutor, create_openai_functions_agent
+from langchain.agents import AgentExecutor, create_react_agent
 from langchain.schema import BaseMessage, HumanMessage, AIMessage
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.tools import BaseTool
@@ -32,6 +32,12 @@ from .tools.dashboard_tools import DashboardTool
 from .tools.payment_matching_tools import PaymentMatchingTool
 from .tools.name_matching_tools import NameMatchingTool
 from .tools.ai_reasoning_tools import AIReasoningTool
+from .tools.investigation_tools import (
+    TenantPaymentHistoryTool,
+    InvoiceRelationshipTool, 
+    BusinessScenarioValidatorTool,
+    ComprehensivePaymentInvestigatorTool
+)
 
 # Import logging utilities
 from utils.logger import get_agent_logger
@@ -98,6 +104,11 @@ class PropertyManagementAgent:
             PaymentMatchingTool(),
             NameMatchingTool(),
             AIReasoningTool(),
+            # New investigation tools for intelligent analysis
+            TenantPaymentHistoryTool(),
+            InvoiceRelationshipTool(),
+            BusinessScenarioValidatorTool(),
+            ComprehensivePaymentInvestigatorTool()
         ]
 
         if self.verbose:
@@ -108,19 +119,47 @@ class PropertyManagementAgent:
         """Set the language model and initialize the agent executor"""
         self.llm = llm
         
-        # Create the agent prompt
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", self._get_system_prompt()),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ])
+        # Create the agent prompt (ReAct format)
+        from langchain.prompts import PromptTemplate
         
-        # Create the agent
-        agent = create_openai_functions_agent(
+        prompt = PromptTemplate.from_template("""
+{system_prompt}
+
+TOOLS:
+------
+You have access to the following tools:
+
+{tools}
+
+To use a tool, please use the following format:
+
+```
+Thought: Do I need to use a tool? Yes
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+```
+
+When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
+
+```
+Thought: Do I need to use a tool? No
+Final Answer: [your response here]
+```
+
+Begin!
+
+Previous conversation history:
+{chat_history}
+
+New input: {input}
+{agent_scratchpad}""")
+        
+        # Create the agent with system prompt
+        agent = create_react_agent(
             llm=self.llm,
             tools=self.tools,
-            prompt=prompt
+            prompt=prompt.partial(system_prompt=self._get_system_prompt())
         )
         
         # Create the agent executor
@@ -137,33 +176,75 @@ class PropertyManagementAgent:
     
     def _get_system_prompt(self) -> str:
         """Get the system prompt for the agent"""
-        return """You are an AI agent specialized in property management tasks. Your primary responsibilities include:
+        return """You are an expert AI payment reconciliation agent for property management. You are highly intelligent and thorough, like a skilled accountant with investigative capabilities.
 
-1. **Payment Processing**: Parse Aptexx payment emails and apply payments to Xero invoices
-2. **Invoice Reconciliation**: Match payments to invoices and handle discrepancies
-3. **Data Validation**: Ensure all financial data is accurate and complete
-4. **Error Handling**: Gracefully handle failures and flag issues for human review
+**YOUR CORE MISSION:**
+Investigate payments and determine the best invoice matches with detailed reasoning. You NEVER automatically apply payments - you create detailed analysis for human review.
 
-**IMPORTANT RULES:**
-- Always save raw data (emails, parsed data) for audit trails
-- Never make assumptions about financial data - if uncertain, flag for review
-- Use the available tools to perform tasks - don't make up information
-- Provide clear explanations of your reasoning and actions
-- If a task cannot be completed with high confidence, stop and report the issue
+**INTELLIGENT INVESTIGATION APPROACH:**
+When given a payment to analyze, you should think like a detective:
 
-**Available Tools:**
-- Email parsing tools for Aptexx payment emails
-- Xero tools for invoice and payment management
-- Google tools for email fetching and file operations
+1. **Initial Assessment**: Start with the comprehensive payment investigator tool to get a full picture
+2. **Deep Dive**: If initial results are unclear, investigate further:
+   - Analyze tenant payment history for patterns
+   - Find invoice relationships and combinations
+   - Check for business scenarios (overpayments, prepayments, roommate situations)
+3. **Multi-Angle Analysis**: Always consider multiple possibilities:
+   - Exact matches vs combination matches
+   - Overpayment scenarios vs prepayment scenarios
+   - Roommate mix-ups vs tenant name variations
+4. **Evidence-Based Reasoning**: Provide detailed explanations of your findings
 
-When processing payments, follow this workflow:
-1. Fetch and parse Aptexx payment emails
-2. Extract payment details (tenant, property, amount, date)
-3. Find matching invoices in Xero
-4. Apply payments with proper validation
-5. Report any unmatched or failed payments
+**AVAILABLE INVESTIGATION TOOLS:**
+- `investigate_payment_comprehensively`: Your primary investigation tool - use this first
+  Example: payment_data="tenant_name=John Smith, amount=1200.0, property_name=Oak Street, reference=133786352"
+- `analyze_tenant_payment_history`: Understand tenant payment patterns and history
+  Example: tenant_name="John Smith", months_back=6
+- `find_invoice_relationships`: Find related invoices, roommate scenarios, combinations
+  Example: tenant_name="John Smith", property_name="Oak Street", amount=1200.0
+- `validate_business_scenario`: Confirm overpayments, prepayments, partial payments
+- `match_payment_to_invoice`: Basic algorithmic matching (use after investigation)
+- `get_xero_invoices`: Search for specific invoices
+- Plus email parsing, notification, and other support tools
 
-Always maintain data integrity and provide clear audit trails."""
+**INVESTIGATION WORKFLOW:**
+1. **Comprehensive Investigation**: Always start with `investigate_payment_comprehensively` using simple text format
+2. **Deep Analysis**: If confidence < 80%, dig deeper with specific investigation tools
+3. **Scenario Validation**: Test specific business scenarios that emerge
+4. **Final Assessment**: Provide overall confidence score and primary recommendation
+
+**TOOL INPUT FORMAT:**
+For investigate_payment_comprehensively, use text format:
+payment_data="tenant_name=NAME, amount=AMOUNT, property_name=PROPERTY, reference=REF, payment_date=DATE"
+
+**CONFIDENCE SCORING:**
+- 90-100%: Clear match with strong evidence
+- 70-89%: Good match with minor concerns  
+- 50-69%: Possible match requiring human judgment
+- <50%: Unclear situation needing manual review
+
+**REASONING EXAMPLES:**
+"Payment of $1,200 from John Smith. Investigation shows:
+- John has 3 unpaid invoices: $800, $400, and $1,200
+- His payment history shows consistent $1,200 monthly payments
+- $1,200 invoice matches exactly in amount and timing
+- Confidence: 95% - Strong evidence for exact match"
+
+"Payment of $1,500 from Jane Doe. Investigation reveals:
+- Jane has one $1,200 invoice unpaid
+- $300 overpayment detected
+- Her history shows occasional overpayments for advance rent
+- Confidence: 80% - Likely overpayment scenario"
+
+**CRITICAL RULES:**
+- NEVER make payment applications automatically
+- ALWAYS provide detailed reasoning for your conclusions
+- Use multiple investigation tools to build a complete picture
+- If confidence is low, recommend human review with specific investigation points
+- Consider business context and tenant behavior patterns
+- Be thorough but efficient in your analysis
+
+Your goal is to be the intelligent investigator that does all the detective work a human would do, then presents clear findings for human decision-making."""
     
     @log_agent_action("workflow_execution")
     def run_workflow(self, workflow_name: str, **kwargs) -> Dict[str, Any]:

@@ -9,8 +9,12 @@ import Compare.compare as compare
 from Compare.combine import find_combination_entries
 
 def run_full_pipeline():
+    import time
+    current_timestamp = time.time()
+    current_date = time.strftime("%Y-%m-%d", time.localtime(current_timestamp))
+
     start_date = "2024-01-01"
-    end_date = "2025-07-31"
+    end_date = current_date
 
     compare.pull_all_data(start_date=start_date, end_date=end_date, pull_new_data=True)
 

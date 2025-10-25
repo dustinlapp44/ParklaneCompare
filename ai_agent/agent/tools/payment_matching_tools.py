@@ -134,16 +134,16 @@ class PaymentMatchingTool(BaseTool):
             confidence = algorithmic_result.get("confidence_score", 0.0)
             
             if confidence >= 0.9:
-                # High confidence - create job with high confidence for human approval
-                logger.info(f"High confidence match ({confidence:.2f}) - creating job for human approval")
+                # High confidence - return algorithmic result for human approval
+                logger.info(f"✅ High confidence algorithmic match ({confidence:.2f}) - returning for human approval")
                 return algorithmic_result
             elif confidence >= 0.7:
                 # Medium confidence - use AI reasoning to improve job quality
-                logger.info(f"Medium confidence match ({confidence:.2f}) - using AI reasoning to improve job quality")
+                logger.info(f"🤖 Medium confidence match ({confidence:.2f}) - applying AI reasoning to improve job quality")
                 return self._apply_ai_reasoning(algorithmic_result, payment, tenant_name, amount, invoices)
             else:
                 # Low confidence - use AI reasoning to provide better insights for human review
-                logger.info(f"Low confidence match ({confidence:.2f}) - using AI reasoning for better insights")
+                logger.info(f"🤖 Low confidence match ({confidence:.2f}) - applying AI reasoning for better insights")
                 return self._apply_ai_reasoning(algorithmic_result, payment, tenant_name, amount, invoices)
                 
         except Exception as e:

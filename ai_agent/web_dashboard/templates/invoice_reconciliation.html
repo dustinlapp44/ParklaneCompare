@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Reconciliation - Parklane Compare</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .nav-tab {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #4a5568;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .main-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .panel-title {
+            font-size: 1.8em;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        .description {
+            color: #718096;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .control-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .control-section h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(72, 187, 120, 0.5);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(237, 137, 54, 0.4);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(237, 137, 54, 0.5);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .status-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .status-label {
+            font-size: 0.9em;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .status-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .terminal-section {
+            background: #2d3748;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .terminal-header {
+            background: #4a5568;
+            color: white;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .terminal-toggle {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+
+        .terminal-content {
+            display: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .terminal-output {
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+            color: #e2e8f0;
+            background: #2d3748;
+        }
+
+        .terminal-line {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .terminal-line.output {
+            color: #e2e8f0;
+        }
+
+        .terminal-line.info {
+            color: #90cdf4;
+        }
+
+        .terminal-line.success {
+            color: #9ae6b4;
+        }
+
+        .terminal-line.error {
+            color: #feb2b2;
+        }
+
+        .terminal-controls {
+            background: #4a5568;
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: #718096;
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .progress-section {
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #718096;
+            font-size: 0.9em;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #f0fff4;
+            color: #2f855a;
+            border-color: #48bb78;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border-color: #f56565;
+        }
+
+        .alert-info {
+            background: #ebf8ff;
+            color: #2b6cb0;
+            border-color: #4299e1;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>📊 Invoice Reconciliation</h1>
+                <p>Run the invoice reconciliation pipeline to process and match invoices with payments</p>
+            </div>
+            <div class="nav-tabs">
+                <a href="/" class="nav-tab">Dashboard</a>
+                <a href="/invoice-reconciliation" class="nav-tab active">Invoice Reconciliation</a>
+            </div>
+        </div>
+
+        <div class="main-panel">
+            <div class="panel-header">
+                <div class="panel-title">🔄 Invoice Reconciliation Pipeline</div>
+            </div>
+
+            <div class="description">
+                This tool runs the complete invoice reconciliation pipeline which:
+                <ul style="margin-top: 10px; margin-left: 20px;">
+                    <li>Pulls all data from Google Drive and Xero</li>
+                    <li>Compares invoices with payments for each property</li>
+                    <li>Finds combination matches for multiple invoices/payments</li>
+                    <li>Generates reconciliation reports</li>
+                    <li>Uploads results to Google Drive</li>
+                </ul>
+            </div>
+
+            <div class="control-section">
+                <h3>🚀 Pipeline Controls</h3>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                    <button id="runPipelineBtn" class="btn btn-primary" onclick="runInvoiceReconciliation()">
+                        ▶️ Run Full Pipeline
+                    </button>
+                    <button id="stopPipelineBtn" class="btn btn-warning hidden" onclick="stopInvoiceReconciliation()">
+                        ⏹️ Stop Pipeline
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearTerminal()">
+                        🧹 Clear Output
+                    </button>
+                </div>
+            </div>
+
+            <div class="status-section">
+                <h3>📈 Pipeline Status</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-label">Status</div>
+                        <div class="status-value" id="pipelineStatus">Ready</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Last Run</div>
+                        <div class="status-value" id="lastRunTime">Never</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Duration</div>
+                        <div class="status-value" id="runDuration">-</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Properties Processed</div>
+                        <div class="status-value" id="propertiesProcessed">0</div>
+                    </div>
+                </div>
+
+                <div class="progress-section hidden" id="progressSection">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Initializing...</div>
+                </div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <div class="terminal-section">
+                <div class="terminal-header" onclick="toggleTerminal()">
+                    <span>🖥️ Pipeline Output</span>
+                    <span class="terminal-toggle" id="terminalToggle">▼</span>
+                </div>
+                <div class="terminal-content" id="terminalContent">
+                    <div class="terminal-output" id="terminalOutput">
+                        <div class="terminal-line">Invoice reconciliation pipeline ready. Click "Run Full Pipeline" to start.</div>
+                    </div>
+                    <div class="terminal-controls">
+                        <button class="btn btn-secondary" onclick="clearTerminal()">Clear Output</button>
+                        <button class="btn btn-secondary" onclick="copyTerminal()">Copy Output</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Socket.IO connection
+        const socket = io();
+        let pipelineRunning = false;
+        let startTime = null;
+
+        // Connection status
+        socket.on('connect', function() {
+            console.log('Connected to server');
+            addTerminalLine('✅ Connected to server', 'success');
+        });
+
+        socket.on('disconnect', function() {
+            console.log('Disconnected from server');
+            addTerminalLine('❌ Disconnected from server', 'error');
+        });
+
+        // Invoice reconciliation events
+        socket.on('invoice_reconciliation_start', function(data) {
+            pipelineRunning = true;
+            startTime = new Date();
+            updateUI();
+            addTerminalLine('🚀 Starting invoice reconciliation pipeline...', 'info');
+            addTerminalLine(`📅 Date range: ${data.start_date} to ${data.end_date}`, 'info');
+        });
+
+        socket.on('invoice_reconciliation_progress', function(data) {
+            if (data.progress !== undefined && data.progress !== null) {
+                // This is a progress update with percentage
+                addTerminalLine(`📊 ${data.message}`, 'info');
+                updateProgress(data.progress, data.message);
+            } else {
+                // This is just output text from the script
+                addTerminalLine(data.message, 'output');
+            }
+        });
+
+        socket.on('invoice_reconciliation_complete', function(data) {
+            pipelineRunning = false;
+            updateUI();
+            const duration = startTime ? Math.round((new Date() - startTime) / 1000) : 0;
+            addTerminalLine(`✅ Pipeline completed successfully!`, 'success');
+            addTerminalLine(`⏱️ Total duration: ${duration} seconds`, 'info');
+            addTerminalLine(`📈 Properties processed: ${data.properties_processed || 0}`, 'info');
+            showAlert('Pipeline completed successfully!', 'success');
+            updateStatus('Completed', new Date().toLocaleString(), `${duration}s`, data.properties_processed || 0);
+        });
+
+        socket.on('invoice_reconciliation_error', function(data) {
+            pipelineRunning = false;
+            updateUI();
+            addTerminalLine(`❌ Pipeline failed: ${data.error}`, 'error');
+            showAlert(`Pipeline failed: ${data.error}`, 'error');
+            updateStatus('Failed', new Date().toLocaleString(), '-', 0);
+        });
+
+        function runInvoiceReconciliation() {
+            if (pipelineRunning) {
+                showAlert('Pipeline is already running!', 'error');
+                return;
+            }
+
+            addTerminalLine('🔄 Initiating invoice reconciliation pipeline...', 'info');
+            showAlert('Starting invoice reconciliation pipeline...', 'info');
+            
+            fetch('/api/invoice-reconciliation/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    addTerminalLine(`❌ Error: ${data.error}`, 'error');
+                    showAlert(`Error: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                addTerminalLine(`❌ Network error: ${error}`, 'error');
+                showAlert(`Network error: ${error}`, 'error');
+            });
+        }
+
+        function stopInvoiceReconciliation() {
+            if (!pipelineRunning) {
+                showAlert('No pipeline is currently running!', 'error');
+                return;
+            }
+
+            addTerminalLine('⏹️ Stopping pipeline...', 'info');
+            
+            fetch('/api/invoice-reconciliation/stop', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    addTerminalLine('✅ Pipeline stopped successfully', 'success');
+                    showAlert('Pipeline stopped successfully', 'success');
+                } else {
+                    addTerminalLine(`❌ Error stopping pipeline: ${data.error}`, 'error');
+                    showAlert(`Error stopping pipeline: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                addTerminalLine(`❌ Network error: ${error}`, 'error');
+                showAlert(`Network error: ${error}`, 'error');
+            });
+        }
+
+        function updateUI() {
+            const runBtn = document.getElementById('runPipelineBtn');
+            const stopBtn = document.getElementById('stopPipelineBtn');
+            const progressSection = document.getElementById('progressSection');
+
+            if (pipelineRunning) {
+                runBtn.disabled = true;
+                runBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-block';
+                progressSection.classList.remove('hidden');
+                updateStatus('Running', new Date().toLocaleString(), '-', 0);
+            } else {
+                runBtn.disabled = false;
+                runBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                progressSection.classList.add('hidden');
+            }
+        }
+
+        function updateProgress(progress, message) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            progressFill.style.width = `${progress}%`;
+            progressText.textContent = message || `${progress}%`;
+        }
+
+        function updateStatus(status, lastRun, duration, properties) {
+            document.getElementById('pipelineStatus').textContent = status;
+            document.getElementById('lastRunTime').textContent = lastRun;
+            document.getElementById('runDuration').textContent = duration;
+            document.getElementById('propertiesProcessed').textContent = properties;
+        }
+
+        function addTerminalLine(message, type = 'info') {
+            const terminalOutput = document.getElementById('terminalOutput');
+            const line = document.createElement('div');
+            line.className = `terminal-line ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            line.innerHTML = `[${timestamp}] ${message}`;
+            
+            terminalOutput.appendChild(line);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        function clearTerminal() {
+            const terminalOutput = document.getElementById('terminalOutput');
+            terminalOutput.innerHTML = '<div class="terminal-line">Terminal cleared.</div>';
+        }
+
+        function copyTerminal() {
+            const terminalOutput = document.getElementById('terminalOutput');
+            const text = terminalOutput.innerText;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('Terminal output copied to clipboard!', 'success');
+            }).catch(() => {
+                showAlert('Failed to copy terminal output', 'error');
+            });
+        }
+
+        function toggleTerminal() {
+            const content = document.getElementById('terminalContent');
+            const toggle = document.getElementById('terminalToggle');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '▶';
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertContainer.appendChild(alert);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 5000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUI();
+        });
+    </script>
+</body>
+</html>

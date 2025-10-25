@@ -33,6 +33,36 @@
             margin-bottom: 20px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-tab {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #4a5568;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
         }
 
         .header h1 {
@@ -81,7 +111,7 @@
             margin-bottom: 20px;
         }
 
-        .jobs-panel,         .chat-panel {
+        .jobs-panel, .chat-panel {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             padding: 20px;
@@ -702,11 +732,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 AI Agent Dashboard</h1>
-            <p>Human-in-the-Loop Review System</p>
-            <div style="margin-top: 10px;">
-                <span class="status-indicator" id="connectionStatus"></span>
-                <span id="connectionText">Connecting...</span>
+            <div>
+                <h1>🤖 AI Agent Dashboard</h1>
+                <p>Human-in-the-Loop Review System</p>
+                <div style="margin-top: 10px;">
+                    <span class="status-indicator" id="connectionStatus"></span>
+                    <span id="connectionText">Connecting...</span>
+                </div>
+            </div>
+            <div class="nav-tabs">
+                <a href="/" class="nav-tab active">Dashboard</a>
+                <a href="/invoice-reconciliation" class="nav-tab">Invoice Reconciliation</a>
             </div>
         </div>
 
@@ -788,6 +824,35 @@
                     <div class="chat-input">
                         <input type="text" id="chatInput" placeholder="Ask me anything about the AI agent or jobs..." onkeypress="if(event.key==='Enter') sendMessage()">
                         <button onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment Processing Terminal -->
+        <div class="sync-panel">
+            <div class="panel-header">
+                <div class="panel-title">🔍 Payment Processing Terminal</div>
+                <div class="panel-controls">
+                    <button class="btn btn-info" onclick="togglePaymentTerminal()" title="Toggle terminal visibility">📺 Terminal</button>
+                    <button class="btn btn-warning" onclick="clearPaymentTerminal()" title="Clear terminal">🧹 Clear</button>
+                </div>
+            </div>
+            <div class="sync-content">
+                <!-- Payment Processing Terminal -->
+                <div class="terminal-section">
+                    <div class="terminal-header" onclick="togglePaymentTerminal()">
+                        <span class="terminal-title">💳 Payment Processing Terminal</span>
+                        <span class="terminal-toggle" id="paymentTerminalToggle">▼</span>
+                    </div>
+                    <div class="terminal-content" id="paymentTerminalContent" style="display: none;">
+                        <div class="terminal-output" id="paymentTerminalOutput">
+                            <div class="terminal-line">Payment processing output will appear here...</div>
+                        </div>
+                        <div class="terminal-controls">
+                            <button class="btn btn-secondary" onclick="clearPaymentTerminal()">Clear Output</button>
+                            <button class="btn btn-secondary" onclick="copyPaymentTerminal()">Copy Output</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -979,9 +1044,14 @@
         });
         
         // Handle email log messages
-        socket.on('email_log', function(data) {
-            addEmailTerminalLine(data.message, data.type);
-        });
+                    socket.on('email_log', function(data) {
+                addEmailTerminalLine(data.message, data.type);
+            });
+            
+            // Handle payment processing logs
+            socket.on('payment_log', function(data) {
+                addPaymentTerminalLine(data.message, data.type);
+            });
 
         // Real-time updates
         socket.on('new_job', function(job) {
@@ -1852,14 +1922,14 @@
         function processPayments() {
             const dateRange = document.getElementById('emailDateRange').value;
             
-            // Clear email terminal and show it
-            clearEmailTerminal();
-            const emailTerminalContent = document.getElementById('emailTerminalContent');
-            if (emailTerminalContent.style.display === 'none') {
-                toggleEmailTerminal();
+            // Clear payment terminal and show it
+            clearPaymentTerminal();
+            const paymentTerminalContent = document.getElementById('paymentTerminalContent');
+            if (paymentTerminalContent.style.display === 'none') {
+                togglePaymentTerminal();
             }
             
-            addEmailTerminalLine(`🚀 Starting unified payment processing for last ${dateRange} days...`, 'info');
+            addPaymentTerminalLine(`🚀 Starting unified payment processing for last ${dateRange} days...`, 'info');
             
             fetch('/api/process-payments', {
                 method: 'POST',
@@ -1893,6 +1963,50 @@
                 console.error('Error processing payments:', error);
                 addEmailTerminalLine(`❌ Error: ${error.message}`, 'error');
                 alert('Error processing payments: ' + error.message);
+            });
+        }
+
+        // Payment Terminal Functions
+        function togglePaymentTerminal() {
+            const content = document.getElementById('paymentTerminalContent');
+            const toggle = document.getElementById('paymentTerminalToggle');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '▲';
+                toggle.style.transform = 'rotate(0deg)';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '▼';
+                toggle.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        function addPaymentTerminalLine(message, type = 'info') {
+            const terminal = document.getElementById('paymentTerminalOutput');
+            const line = document.createElement('div');
+            line.className = `terminal-line ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            line.textContent = `[${timestamp}] ${message}`;
+            
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        function clearPaymentTerminal() {
+            const terminal = document.getElementById('paymentTerminalOutput');
+            terminal.innerHTML = '<div class="terminal-line">Payment terminal output cleared...</div>';
+        }
+        
+        function copyPaymentTerminal() {
+            const terminal = document.getElementById('paymentTerminalOutput');
+            const text = terminal.innerText;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                addPaymentTerminalLine('Payment terminal output copied to clipboard', 'success');
+            }).catch(() => {
+                addPaymentTerminalLine('Failed to copy payment terminal output', 'error');
             });
         }
 

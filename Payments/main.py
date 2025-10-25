@@ -1,6 +1,7 @@
 # main.py
 import sys
 import os
+from time import time
 from bs4 import BeautifulSoup
 
 
@@ -57,9 +58,11 @@ def build_html_email(payments):
     return html
 
 def process_payments(start_date=None, end_date=None):
+    printlist=[]
     # Step 1. Fetch AptExx emails
     emails = fetch_aptexx_emails(start_date=start_date, end_date=end_date)
     
+    print(f'Processing {len(emails)} AptExx emails...')
     for email in emails:
         if email['html']:
             parsed_payments = parse_html_payments(email['html'])
@@ -67,6 +70,8 @@ def process_payments(start_date=None, end_date=None):
             print("No usable email content found.")
 
         total_amount = sum(payment['amount'] for payment in parsed_payments)
+        if parsed_payments[0]:
+            printlist.append(parsed_payments[0]['date'])
         missed_payments=[]
         for payment in parsed_payments:
             print(f"Processing AptExx payment: {payment['ref']} on {payment['date']} for amount {payment['amount']}")
@@ -99,16 +104,26 @@ def process_payments(start_date=None, end_date=None):
             print("Sending email for missed payments...")
             send_email(subject="Missed Payments", message_text=html)
         print(f"Total amount for all payments: ${total_amount:.2f}")
+    print("Processed payments for these dates: ")
+    for x in printlist:
+        print(x)
 
 if __name__ == "__main__":
+    import time 
+    ## Grab current date in correct format
+    current_timestamp = time.time()
+    current_date = time.strftime("%Y-%m-%d", time.localtime(current_timestamp))
 
     invoice_start_date = "2025-05-01"
-    invoice_end_date = "2025-08-14"
+    invoice_end_date = current_date
+    
     refresh_invoice_cache(invoice_start_date, invoice_end_date)
 
-    email_start_date = "2025-08-14"
-    email_end_date = "2025-08-14"
+    email_start_date = "2025-10-10"
+    email_end_date = current_date
+    #email_end_date = "2025-10-04"
     process_payments(email_start_date, email_end_date)
 
     
         
+
